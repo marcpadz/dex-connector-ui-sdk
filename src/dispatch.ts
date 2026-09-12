@@ -8,6 +8,7 @@ import {
   fromJsonFallback,
   fromMcp,
   fromRead,
+  fromUiResource,
   fromVideoGen,
   fromWebFetch,
   fromWebSearch,
@@ -111,6 +112,12 @@ export function extractToolMedia(
       if (hit) return hit(part);
     }
   }
+
+  // MCP Apps interop: a tool carrying a ui:// UIResource renders as a
+  // sandboxed iframe (server-authored UI) — checked before the generic
+  // envelope so an Apps-enabled server's tool wins over mcp-result JSON.
+  const ui = fromUiResource(part);
+  if (ui) return ui;
 
   return fromMcp(part) ?? fromJsonFallback(part);
 }

@@ -254,6 +254,114 @@ export function fromMcp(part: ToolPartLike): McpResultMedia | null {
   return { kind: "mcp-result", server: serverName, tool: tool ?? part.tool, args, content, itemCount };
 }
 
+// ─── MCP Apps / UIResource (SEP-1865 interop) ───
+
+const UI_URI_PREFIX = "ui://";
+
+function decodeResourceHtml(item: Record<string, unknown>): string | undefined {
+  if (typeof item.text === "string" && item.text.trim()) return item.text;
+  if (typeof item.blob === "string" && item.blob.trim()) {
+    try {
+      // MCP resources may inline the document base64-encoded.
+      const decoded = atob(item.blob);
+      return decoded.trim() || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+function collectCsp(uiMeta: Record<string, unknown>): Record<string, string[]> | undefined {
+  const csp = uiMeta.csp;
+  if (!csp || typeof csp !== "object") return undefined;
+  const out: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(csp as Record<string, unknown>)) {
+    if (typeof value === "string") out[key] = value.split(/\s+/).filter(Boolean);
+    else if (Array.isArray(value)) out[key] = value.filter((v): v is string => typeof v === "string");
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * Extract an MCP Apps UIResource (SEP-1865 / MCP-UI) from a tool result.
+ * Recognizes all three delivery shapes:
+ *  1. `_meta.ui.resourceUri` (host fetches via resources/read) with optional
+ *     `_meta.ui.csp` directives.
+ *  2. An MCP content item `{ type: "resource", uri: "ui://…" }` with the HTML
+ *     inlined as `text` or base64 `blob` (checked in metadata.mcp_content,
+ *     the output JSON, and output resource arrays).
+ *  3. `_meta.ui.html` — a server convenience inlining.
+ * Returns null when the result carries no UI identity — the dispatch then
+ * falls through to the generic mcp-result/JSON chain.
+ */
+export function fromUiResource(part: ToolPartLike): import("../types.js").UiResourceMedia | null {
+  if (isRunning(part)) return null;
+  const metadata = partMetadata(part);
+  const server = asString(metadata.mcp_server) ?? asString(part.state.title)?.match(/^\[MCP:\s*(.+?)\]/i)?.[1];
+  if (!server) return null;
+
+  const tool = asString(metadata.mcp_tool) ?? part.tool;
+
+  // Shape 1 + 3: `_meta.ui` (hosts flatten SEP-1865 result meta into
+  // metadata, so the binding lives at metadata.ui or metadata._meta.ui).
+  const uiMetaRaw = (metadata.ui ??
+    (metadata._meta as Record<string, unknown> | undefined)?.ui) as
+    | Record<string, unknown>
+    | undefined;
+  if (uiMetaRaw && typeof uiMetaRaw === "object") {
+    const resourceUri = asString(uiMetaRaw.resourceUri) ?? asString(uiMetaRaw.uri);
+    const html = asString(uiMetaRaw.html);
+    if (resourceUri?.startsWith(UI_URI_PREFIX) || html) {
+      return {
+        kind: "ui-resource",
+        server,
+        tool,
+        resourceUri: resourceUri ?? "",
+        html,
+        mimeType: asString(uiMetaRaw.mimeType) ?? asString(uiMetaRaw.mime_type),
+        csp: collectCsp(uiMetaRaw),
+      };
+    }
+  }
+
+  // Shape 2: an MCP resource content item with a ui:// URI.
+  const candidates: unknown[] = [];
+  if (Array.isArray(metadata.mcp_content)) candidates.push(metadata.mcp_content);
+  if (typeof part.state.output === "string") {
+    try {
+      const parsed = JSON.parse(part.state.output) as unknown;
+      if (Array.isArray(parsed)) candidates.push(parsed);
+      else if (parsed && typeof parsed === "object" && Array.isArray((parsed as Record<string, unknown>).content)) {
+        candidates.push((parsed as Record<string, unknown>).content);
+      }
+    } catch {
+      // not JSON
+    }
+  }
+  for (const arr of candidates) {
+    for (const raw of arr as unknown[]) {
+      if (raw === null || typeof raw !== "object") continue;
+      const item = raw as Record<string, unknown>;
+      if (item.type !== "resource") continue;
+      const uri = asString(item.uri) ?? asString((item.resource as Record<string, unknown>)?.uri);
+      if (!uri || !uri.startsWith(UI_URI_PREFIX)) continue;
+      const inner = (item.resource as Record<string, unknown>) ?? item;
+      return {
+        kind: "ui-resource",
+        server,
+        tool,
+        resourceUri: uri,
+        html: decodeResourceHtml(item) ?? decodeResourceHtml(inner),
+        mimeType: asString(item.mimeType) ?? asString(item.mime_type) ?? asString(inner.mimeType),
+        csp: collectCsp((metadata.ui as Record<string, unknown>) ?? {}),
+      };
+    }
+  }
+
+  return null;
+}
+
 // ─── JSON fallback ───
 
 export function fromJsonFallback(part: ToolPartLike): import("../types.js").JsonMedia | null {

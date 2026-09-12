@@ -14,6 +14,7 @@ export {
   fromDiff,
   fromMcp,
   fromJsonFallback,
+  fromUiResource,
   fromVideoGen,
 } from "./extract/generic.js";
 export {

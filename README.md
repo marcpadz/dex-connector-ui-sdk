@@ -23,7 +23,7 @@ npm install dex-connector-ui-sdk
 | `ToolMedia` | The descriptor union — the entire contract between extractors and renderers. |
 | `extractToolMedia(part, customExtractors?)` | One-call extraction: family envelopes → builtin tools → connector servers → generic MCP → JSON fallback. |
 | `BUILTIN_EXTRACTORS` / `SERVER_EXTRACTORS` | The dispatch tables, exposed for extension. |
-| Generic extractors | `fromRead`, `fromWebSearch`, `fromWebFetch`, `fromBash`, `fromWriteOrEdit`, `fromDiff`, `fromMcp`, `fromJsonFallback`, `fromVideoGen`. |
+| Generic extractors | `fromRead`, `fromWebSearch`, `fromWebFetch`, `fromBash`, `fromWriteOrEdit`, `fromDiff`, `fromMcp`, `fromJsonFallback`, `fromUiResource` (MCP Apps), `fromVideoGen`. |
 | Connector extractors | `fromGmailList/Detail/Editor/SendConfirm`, `fromCalendarAgenda`, `fromDriveList`, `fromSlackThread`, `fromNotesEnvelope`, `fromTasksEnvelope`. |
 | Activity strip | `fromActivityBlock`, `groupActivityBlocks`, `buildActivityFrames`, `activityActionLabel`, `activityActionIcon`, `isComputerUseToolPart`, `isBrowserToolPart`. |
 
@@ -53,6 +53,18 @@ extractToolMedia(part, {
 **Generic media** (host-independent): `image`, `svg`, `html`, `video`, `code`,
 `diff`, `markdown`, `search-results`, `fetch`, `bash-output`, `file-read`,
 `mcp-result`, `json`, `browser-selection`.
+
+**MCP Apps interop** (`ui-resource`): when a tool result carries a `ui://`
+UIResource (SEP-1865 / MCP-UI — e.g. from servers built with
+[`@modelcontextprotocol/ext-apps`](https://github.com/modelcontextprotocol/ext-apps)
+or [`@mcp-ui/server`](https://github.com/MCP-UI-Org/mcp-ui)), the extractor
+emits a `ui-resource` descriptor carrying the resource URI, any inlined HTML
+(text or base64 blob), and the server's CSP directives. The host renders it
+in a sandboxed iframe (`allow-scripts`, no `allow-same-origin`) inside its
+standard card chrome. This is the one channel where the *server* authors the
+UI — prefer host-owned descriptors when a connector's result shape is known.
+Recognition covers `_meta.ui.resourceUri`, `metadata._meta.ui`, and
+`ui://`-typed MCP resource content items (text or blob).
 
 **First-party families**: `activity-strip` (Computer Use / Browser
 screenshots + agent reasoning captions + action chips — the horizontal frame

@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dex-connector-ui-sdk — Component Mockup</title>
+<style>
+  /* ─── Design Tokens (extracted from component types) ─── */
+  :root {
+    --color-bg: #ffffff;
+    --color-surface: #f8f9fb;
+    --color-surface-2: #f0f2f5;
+    --color-border: #e2e5ea;
+    --color-border-soft: #eef0f4;
+    --color-text-primary: #111318;
+    --color-text-secondary: #5f636b;
+    --color-text-tertiary: #9aa0a6;
+    --color-accent: #4f6ef7;
+    --color-accent-light: #eef1fe;
+    --color-success: #1a8d5c;
+    --color-success-light: #eaf7f1;
+    --color-warning: #d97706;
+    --color-warning-light: #fef3e2;
+    --color-danger: #dc2626;
+    --color-danger-light: #fde8e8;
+    --color-code-bg: #f4f5f7;
+    --color-diff-add: #eaf7f1;
+    --color-diff-del: #fde8e8;
+    --color-diff-add-text: #1a8d5c;
+    --color-diff-del-text: #b91c1c;
+    --color-activity-bg: #f0f2f5;
+    --color-activity-frame: #ffffff;
+    --color-chip-bg: #e8eaf0;
+    --color-chip-text: #444a54;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 4px 14px rgba(0,0,0,0.04);
+    --shadow-card-hover: 0 2px 6px rgba(0,0,0,0.10), 0 8px 20px rgba(0,0,0,0.06);
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    --fs-xs: 11px;
+    --fs-sm: 12px;
+    --fs-base: 13px;
+    --fs-md: 14px;
+    --fs-lg: 15px;
+    --fs-xl: 17px;
+    --fs-2xl: 20px;
+    --line-height-sm: 1.4;
+    --line-height-base: 1.55;
+    --line-height-lg: 1.65;
+    --space-1: 4px;
+    --space-2: 6px;
+    --space-3: 8px;
+    --space-4: 10px;
+    --space-5: 12px;
+    --space-6: 16px;
+    --space-8: 20px;
+    --space-10: 24px;
+    --space-12: 32px;
+    --space-16: 40px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: var(--line-height-base);
+    color: var(--color-text-primary);
+    background: #eef0f4;
+    padding: var(--space-10);
+  }
+
+  /* ─── Page Header ─── */
+  .page-header {
+    margin-bottom: var(--space-12);
+  }
+  .page-header h1 {
+    font-size: var(--fs-2xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+  }
+  .page-header p {
+    color: var(--color-text-secondary);
+    margin-top: var(--space-2);
+    font-size: var(--fs-md);
+  }
+  .page-header .badge {
+    display: inline-block;
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    padding: var(--space-1) var(--space-3);
+    border-radius: 99px;
+    margin-left: var(--space-4);
+    vertical-align: middle;
+  }
+
+  /* ─── Section ─── */
+  .section {
+    margin-bottom: var(--space-12);
+  }
+  .section-title {
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .section-title .tag {
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ─── Card Grid ─── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: var(--space-6);
+  }
+  .card-grid.wide {
+    grid-template-columns: 1fr;
+  }
+
+  /* ─── Base Card ─── */
+  .card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: box-shadow 0.15s ease;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .card-header {
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--color-border-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .card-header-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .card-header h3 {
+    font-size: var(--fs-md);
+    font-weight: 600;
+    flex: 1;
+  }
+  .card-header .meta {
+    font-size: var(--fs-xs);
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+  }
+  .card-body {
+    padding: var(--space-6);
+  }
+
+  /* ─── Kind Badge ─── */
+  .kind-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-1) var(--space-3);
+  }
+  .kind-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  /* ─── Generic Media Cards ─── */
+  .media-image-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--fs-xl);
+    font-weight: 600;
+  }
+  .media-caption {
+    margin-top: var(--space-3);
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+  }
+
+  /* ─── Code Block ─── */
+  .code-block {
+    background: var(--color-code-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-6);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    line-height: var(--line-height-lg);
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--color-text-primary);
+  }
+  .code-lang {
+    display: inline-block;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .code-line-added { background: var(--color-diff-add); color: var(--color-diff-add-text); display: block; }
+  .code-line-removed { background: var(--color-diff-del); color: var(--color-diff-del-text); display: block; }
+
+  /* ─── Diff Stats ─── */
+  .diff-stats {
+    display: flex;
+    gap: var(--space-6);
+    margin-bottom: var(--space-4);
+  }
+  .diff-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+  }
+  .diff-stat .plus { color: var(--color-success); }
+  .diff-stat .minus { color: var(--color-danger); }
+
+  /* ─── Search Results ─── */
+  .search-result {
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+  .search-result:last-child { border-bottom: none; }
+  .search-result-title {
+    font-size: var(--fs-md);
+    font-weight: 500;
+    color: var(--color-accent);
+    margin-bottom: var(--space-1);
+  }
+  .search-result-url {
+    font-size: var(--fs-xs);
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--space-2);
+  }
+  .search-result-snippet {
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-sm);
+  }
+
+  /* ─── Bash Output ─── */
+  .bash-output {
+    background: #1a1b26;
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-6);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    line-height: var(--line-height-lg);
+    color: #a9b1d6;
+    overflow-x: auto;
+  }
+  .bash-output .prompt { color: #7aa2f7; }
+  .bash-output .success { color: #9ece6a; }
+  .bash-output .error { color: #f7768e; }
+  .bash-rc {
+    margin-top: var(--space-3);
+    font-size: var(--fs-xs);
+    color: var(--color-text-tertiary);
+  }
+
+  /* ─── List Card ─── */
+  .list-card-header {
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--color-border-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .list-card-header .server-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .list-card-header h3 {
+    font-size: var(--fs-md);
+    font-weight: 600;
+    flex: 1;
+  }
+  .list-card-header .count {
+    font-size: var(--fs-xs);
+    color: var(--color-text-tertiary);
+  }
+  .list-group {
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+  .list-group:last-child { border-bottom: none; }
+  .list-group-header {
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-tertiary);
+    background: var(--color-surface);
+    position: sticky;
+    top: 0;
+  }
+  .list-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--color-border-soft);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .list-row:last-child { border-bottom: none; }
+  .list-row:hover { background: var(--color-surface); }
+  .list-row.unread { background: var(--color-accent-light); }
+  .list-row.unread:hover { background: #e0e6fc; }
+  .list-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-chip-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+  .list-row-content {
+    min-width: 0;
+  }
+  .list-row-primary {
+    font-size: var(--fs-base);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-row.unread .list-row-primary { font-weight: 600; }
+  .list-row-secondary {
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .list-row-meta {
+    font-size: var(--fs-xs);
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .list-row.chips {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    color: var(--color-chip-text);
+    background: var(--color-chip-bg);
+    border-radius: 99px;
+    padding: var(--space-1) var(--space-3);
+    white-space: nowrap;
+  }
+  .list-footer {
+    padding: var(--space-4) var(--space-6);
+    text-align: center;
+  }
+  .list-footer button {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    cursor: pointer;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+  }
+  .list-footer button:hover { background: var(--color-accent-light); }
+
+  /* ─── Detail Card ─── */
+  .detail-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  .detail-card-header { padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-border-soft); display: flex; align-items: flex-start; gap: var(--space-4); }
+  .detail-card-header .server-badge { font-size: var(--fs-xs); font-weight: 600; padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-text-secondary); flex-shrink: 0; }
+  .detail-card-title { font-size: var(--fs-lg); font-weight: 600; color: var(--color-text-primary); line-height: var(--line-height-sm); }
+  .detail-card-subtitle { font-size: var(--fs-sm); color: var(--color-text-secondary); margin-top: var(--space-1); }
+  .detail-card-body { padding: var(--space-6); }
+  .detail-field { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-soft); }
+  .detail-field:last-of-type { border-bottom: none; }
+  .detail-field-label { font-size: var(--fs-sm); color: var(--color-text-tertiary); width: 80px; flex-shrink: 0; padding-top: 2px; }
+  .detail-field-value { font-size: var(--fs-base); color: var(--color-text-primary); line-height: var(--line-height-base); }
+  .detail-body { margin-top: var(--space-5); padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); font-size: var(--fs-sm); line-height: var(--line-height-lg); color: var(--color-text-secondary); }
+  .detail-attachments { margin-top: var(--space-4); display: flex; gap: var(--space-3); flex-wrap: wrap; }
+  .attachment-chip { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--color-text-secondary); background: var(--color-surface-2); border: 1px solid var(--color-border); padding: var(--space-2) var(--space-4); border-radius: var(--radius-sm); }
+  .attachment-chip .icon { font-size: 14px; }
+
+  /* ─── Editor Card ─── */
+  .editor-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  .editor-card-header { padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-border-soft); display: flex; align-items: center; gap: var(--space-4); }
+  .editor-card-header h3 { font-size: var(--fs-md); font-weight: 600; flex: 1; }
+  .editor-card-body { padding: var(--space-6); }
+  .editor-field { margin-bottom: var(--space-5); }
+  .editor-field:last-child { margin-bottom: 0; }
+  .editor-field-label { font-size: var(--fs-sm); font-weight: 500; color: var(--color-text-primary); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2); }
+  .editor-field-label .required { color: var(--color-danger); }
+  .editor-field-label .control-hint { font-size: var(--fs-xs); color: var(--color-text-tertiary); font-weight: 400; margin-left: auto; }
+  .editor-chips-input { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); min-height: 38px; }
+  .editor-chip { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); background: var(--color-accent-light); color: var(--color-accent); padding: var(--space-1) var(--space-3); border-radius: 99px; }
+  .editor-chip-remove { cursor: pointer; opacity: 0.6; }
+  .editor-chip-remove:hover { opacity: 1; }
+  .editor-chip-input { border: none; outline: none; font-size: var(--fs-sm); flex: 1; min-width: 120px; color: var(--color-text-primary); }
+  .editor-text-input { width: 100%; padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--fs-base); font-family: var(--font-sans); color: var(--color-text-primary); background: var(--color-bg); transition: border-color 0.15s; }
+  .editor-text-input:focus { outline: none; border-color: var(--color-accent); }
+  .editor-textarea { width: 100%; min-height: 120px; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--fs-base); font-family: var(--font-sans); line-height: var(--line-height-lg); color: var(--color-text-primary); background: var(--color-bg); resize: vertical; transition: border-color 0.15s; }
+  .editor-textarea:focus { outline: none; border-color: var(--color-accent); }
+  .editor-signoff { margin-top: var(--space-4); padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); }
+  .editor-signoff-label { font-size: var(--fs-xs); color: var(--color-text-tertiary); margin-bottom: var(--space-2); }
+  .editor-signoff-select { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .editor-signoff-option { font-size: var(--fs-sm); color: var(--color-text-secondary); background: var(--color-bg); border: 1px solid var(--color-border); padding: var(--space-2) var(--space-4); border-radius: var(--radius-sm); cursor: pointer; }
+  .editor-signoff-option:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .editor-footer { padding: var(--space-4) var(--space-6); border-top: 1px solid var(--color-border-soft); display: flex; justify-content: flex-end; gap: var(--space-3); }
+  .btn { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); font-weight: 500; padding: var(--space-3) var(--space-5); border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer; transition: all 0.1s; }
+  .btn-primary { background: var(--color-accent); color: white; border-color: var(--color-accent); }
+  .btn-primary:hover { background: #3d5ce5; }
+  .btn-secondary { background: var(--color-bg); color: var(--color-text-primary); border-color: var(--color-border); }
+  .btn-secondary:hover { background: var(--color-surface); }
+  .btn-danger { background: var(--color-danger); color: white; }
+
+  /* ─── Confirm Card ─── */
+  .confirm-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  .confirm-banner { padding: var(--space-4) var(--space-6); font-size: var(--fs-sm); font-weight: 500; display: flex; align-items: center; gap: var(--space-3); }
+  .confirm-banner.info { background: var(--color-accent-light); color: var(--color-accent); }
+  .confirm-banner.warning { background: var(--color-warning-light); color: var(--color-warning); }
+  .confirm-banner.danger { background: var(--color-danger-light); color: var(--color-danger); }
+  .confirm-banner .banner-icon { font-size: 16px; flex-shrink: 0; }
+  .confirm-card-body { padding: var(--space-6); }
+  .confirm-fields { margin-bottom: var(--space-5); }
+  .confirm-field { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-soft); }
+  .confirm-field:last-child { border-bottom: none; }
+  .confirm-field-label { font-size: var(--fs-sm); color: var(--color-text-tertiary); width: 80px; flex-shrink: 0; }
+  .confirm-field-value { font-size: var(--fs-base); color: var(--color-text-primary); }
+  .confirm-body-preview { background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-4); font-size: var(--fs-sm); line-height: var(--line-height-lg); color: var(--color-text-secondary); margin-bottom: var(--space-5); }
+  .confirm-actions { display: flex; gap: var(--space-3); justify-content: flex-end; }
+
+  /* ─── Activity Strip ─── */
+  .activity-strip {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .activity-strip-header {
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--color-border-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .family-badge {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .family-badge.computer-use { background: #fef3e2; color: #b45309; }
+  .family-badge.browser { background: #eef1fe; color: #4f46e5; }
+  .activity-steps { font-size: var(--fs-xs); color: var(--color-text-tertiary); margin-left: auto; }
+  .activity-frames {
+    padding: var(--space-6);
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: auto;
+    background: var(--color-surface);
+  }
+  .activity-frame {
+    flex-shrink: 0;
+    width: 200px;
+    background: var(--color-activity-frame);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .activity-frame.screenshot {
+    cursor: pointer;
+  }
+  .activity-frame-img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    display: block;
+  }
+  .activity-frame-img-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: center;
+    padding: var(--space-4);
+  }
+  .activity-frame-reasoning {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--fs-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-sm);
+    border-top: 1px solid var(--color-border-soft);
+    background: var(--color-surface);
+  }
+  .activity-frame-action {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    text-align: center;
+  }
+  .activity-frame-action .icon-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .activity-frame-action .action-label {
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: var(--line-height-sm);
+  }
+  .activity-frame-thought {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+  }
+  .activity-frame-thought .thought-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f0fdf4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .activity-frame-thought .thought-text {
+    font-size: var(--fs-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-sm);
+  }
+  .activity-connector {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    color: var(--color-text-tertiary);
+    font-size: 12px;
+  }
+
+  /* ─── Envelope Cards ─── */
+  .envelope-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .envelope-card-header {
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--color-border-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .envelope-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .envelope-card-header h3 { font-size: var(--fs-md); font-weight: 600; flex: 1; }
+  .envelope-card-body { padding: var(--space-6); }
+  .envelope-note {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    border-left: 3px solid var(--color-accent);
+  }
+  .envelope-note:last-child { margin-bottom: 0; }
+  .envelope-note-title { font-size: var(--fs-sm); font-weight: 600; color: var(--color-text-primary); }
+  .envelope-note-meta { font-size: var(--fs-xs); color: var(--color-text-tertiary); margin-top: var(--space-1); }
+  .envelope-note-snippet { font-size: var(--fs-sm); color: var(--color-text-secondary); margin-top: var(--space-2); line-height: var(--line-height-sm); }
+  .envelope-folder {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+    background: var(--color-surface-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    margin-right: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .envelope-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--fs-xs);
+    color: var(--color-text-tertiary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    margin-right: var(--space-1);
+    margin-bottom: var(--space-1);
+  }
+
+  /* ─── Tasks Envelope ─── */
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+  }
+  .task-item:last-child { margin-bottom: 0; }
+  .task-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .task-checkbox.checked { background: var(--color-success); border-color: var(--color-success); }
+  .task-content { flex: 1; min-width: 0; }
+  .task-title { font-size: var(--fs-sm); font-weight: 500; color: var(--color-text-primary); }
+  .task-title.done { text-decoration: line-through; color: var(--color-text-tertiary); }
+  .task-key { font-size: var(--fs-xs); font-weight: 600; color: var(--color-text-tertiary); margin-right: var(--space-2); }
+  .task-meta { font-size: var(--fs-xs); color: var(--color-text-tertiary); margin-top: 2px; }
+  .task-status {
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    padding: var(--space-1) var(--space-3);
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .task-status.not_started { background: var(--color-surface-2); color: var(--color-text-secondary); }
+  .task-status.in_progress { background: var(--color-warning-light); color: var(--color-warning); }
+  .task-status.completed { background: var(--color-success-light); color: var(--color-success); }
+
+  /* ─── McpResult Card ─── */
+  .mcp-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  .mcp-card-header { padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-border-soft); display: flex; align-items: center; gap: var(--space-4); }
+  .mcp-server-badge { font-size: var(--fs-xs); font-weight: 600; padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-text-secondary); }
+  .mcp-card-body { padding: var(--space-6); }
+  .mcp-content-item { padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); margin-bottom: var(--space-3); font-size: var(--fs-sm); line-height: var(--line-height-lg); color: var(--color-text-secondary); }
+  .mcp-content-item:last-child { margin-bottom: 0; }
+
+  /* ─── Utility ─── */
+  .divider { height: 1px; background: var(--color-border); margin: var(--space-6) 0; }
+  .text-muted { color: var(--color-text-tertiary); }
+  .text-sm { font-size: var(--fs-sm); }
+  .flex { display: flex; }
+  .gap-2 { gap: var(--space-2); }
+  .gap-3 { gap: var(--space-3); }
+  .items-center { align-items: center; }
+  .flex-wrap { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE HEADER                                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <h1>UI Component Mockup <span class="badge">dex-connector-ui-sdk</span></h1>
+  <p>All descriptor kinds rendered 1:1 against extracted design tokens. Pure data — host renders.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION: Generic Media                                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    Generic Media <span class="tag">kind: image · code · diff · bash · search · fetch · mcp · json</span>
+  </div>
+  <div class="card-grid">
+
+    <!-- Image -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#eef1fe;color:#4f6ef7;">🖼</div>
+        <h3>image</h3>
+        <span class="meta">kind: "image"</span>
+      </div>
+      <div class="card-body">
+        <div class="media-image-placeholder">screenshot.png</div>
+        <div class="media-caption">alt: "Screenshot of dashboard"</div>
+      </div>
+    </div>
+
+    <!-- Code -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#fef3e2;color:#b45309;">⟨/⟩</div>
+        <h3>code</h3>
+        <span class="meta">kind: "code" · typescript</span>
+      </div>
+      <div class="card-body">
+        <span class="code-lang">typescript</span>
+        <div class="code-block"><span class="code-line-added">+ export interface ToolMedia {</span>
+<span class="code-line-added">+   kind: string;</span>
+<span class="code-line-added">+   server: string;</span>
+<span class="code-line">  title: string;</span>
+<span class="code-line-removed">-   legacy: boolean;</span>
+<span class="code-line">  };</span></div>
+      </div>
+    </div>
+
+    <!-- Diff -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#eaf7f1;color:#1a8d5c;">⇄</div>
+        <h3>diff</h3>
+        <span class="meta">kind: "diff"</span>
+      </div>
+      <div class="card-body">
+        <div class="diff-stats">
+          <div class="diff-stat"><span class="plus">+3</span> additions</div>
+          <div class="diff-stat"><span class="minus">−1</span> deletions</div>
+        </div>
+        <span class="code-lang">git diff</span>
+        <div class="code-block"><span class="code-line-removed">- export type OldKind = string;</span>
+<span class="code-line">+ export type NewKind = string | number;</span>
+<span class="code-line">  // unchanged</span>
+<span class="code-line-added">+ export const FLAG = true;</span>
+<span class="code-line-added">+ export function foo() {}</span>
+<span class="code-line-added">+ export interface Bar {}</span></div>
+      </div>
+    </div>
+
+    <!-- Bash Output -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#f0f2f5;color:#111318;">⌘</div>
+        <h3>bash-output</h3>
+        <span class="meta">kind: "bash-output" · rc: 0</span>
+      </div>
+      <div class="card-body">
+        <div class="bash-output"><span class="prompt">$</span> npm test
+
+<span class="success">✓ generic.test.ts (41 tests passed)</span>
+<span class="success">✓ connectors.test.ts (28 tests passed)</span>
+<span class="success">✓ activity.test.ts (12 tests passed)</span>
+
+<span style="color:#7aa2f7;">Test Suites: 3 passed, 3 total</span>
+<span style="color:#7aa2f7;">Tests:       81 passed, 81 total</span></div>
+        <div class="bash-rc">Exit code: <span style="color:#9ece6a;font-weight:600;">0</span></div>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#eaf7f1;color:#1a8d5c;">⌕</div>
+        <h3>search-results</h3>
+        <span class="meta">kind: "search-results"</span>
+      </div>
+      <div class="card-body">
+        <div class="text-sm text-muted" style="margin-bottom:var(--space-4);">Query: <strong style="color:var(--color-text-primary);">dex connector UI SDK tokens</strong></div>
+        <div class="search-result">
+          <div class="search-result-title">dex-connector-ui-sdk — npm</div>
+          <div class="search-result-url">https://www.npmjs.com/package/dex-connector-ui-sdk</div>
+          <div class="search-result-snippet">A harness-agnostic agent capability SDK that turns raw tool-call results into structured UI descriptors.</div>
+        </div>
+        <div class="search-result">
+          <div class="search-result-title">MCP Inline UI Handover Report</div>
+          <div class="search-result-url">https://dextop.internal/docs/plans/2026-09-06</div>
+          <div class="search-result-snippet">Design spec for the primitive card vocabulary: list-card, detail-card, editor-card, confirm-card.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fetch -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#fef3e2;color:#b45309;">↗</div>
+        <h3>fetch</h3>
+        <span class="meta">kind: "fetch"</span>
+      </div>
+      <div class="card-body">
+        <div class="text-sm" style="color:var(--color-accent);margin-bottom:var(--space-2);">https://api.github.com/repos/…</div>
+        <div class="text-sm text-muted" style="line-height:var(--line-height-lg);">A harness-agnostic agent capability SDK that turns raw tool-call results (builtin tools + MCP connectors) into structured UI descriptors. Pure data, zero runtime dependencies, no React, no DOM rendering — the host renders.</div>
+      </div>
+    </div>
+
+    <!-- MCP Result -->
+    <div class="mcp-card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#eef1fe;color:#4f6ef7;">◆</div>
+        <h3>mcp-result</h3>
+        <span class="mcp-server-badge">server: github</span>
+        <span class="meta" style="font-size:var(--fs-xs);color:var(--color-text-tertiary);">kind: "mcp-result"</span>
+      </div>
+      <div class="card-body">
+        <div class="mcp-content-item"><strong>tool:</strong> search_repositories</div>
+        <div class="mcp-content-item">Found 3 repositories matching "dex connector". Top result: dex-connector-ui-sdk with 42 stars.</div>
+      </div>
+    </div>
+
+    <!-- JSON -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#f0f2f5;color:#111318;">{ }</div>
+        <h3>json</h3>
+        <span class="meta">kind: "json"</span>
+      </div>
+      <div class="card-body">
+        <div class="code-block">{
+  "kind": "confirm-card",
+  "server": "gmail",
+  "banner": "Dex wants to send this email now",
+  "fields": [
+    { "label": "To", "value": "marc@sapiens.ai" },
+    { "label": "Subject", "value": "SDK Audit" }
+  ]
+}</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION: Primitive Cards (Connector Vocabulary)       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    Primitive Card Vocabulary <span class="tag">§3 — list-card · detail-card · editor-card · confirm-card</span>
+  </div>
+  <div class="card-grid">
+
+    <!-- List Card: Gmail -->
+    <div class="list-card">
+      <div class="list-card-header">
+        <div class="server-icon" style="background:#eaf7f1;color:#1a8d5c;">✉</div>
+        <h3>Gmail</h3>
+        <span class="count">142 messages</span>
+      </div>
+      <div class="list-row unread">
+        <div class="list-avatar" style="background:#fef3e2;color:#b45309;">MA</div>
+        <div class="list-row-content">
+          <div class="list-row-primary">Marc Adrian — Re: SDK design tokens</div>
+          <div class="list-row-secondary">Can you also extract the token set for the host renderer?</div>
+        </div>
+        <div class="list-row-meta">2m ago</div>
+      </div>
+      <div class="list-row">
+        <div class="list-avatar" style="background:#eef1fe;color:#4f6ef7;">DL</div>
+        <div class="list-row-content">
+          <div class="list-row-primary">Dex Labs — New connector available</div>
+          <div class="list-row-secondary">The Slack connector is now live in production.</div>
+        </div>
+        <div class="list-row-meta">1h ago</div>
+      </div>
+      <div class="list-row">
+        <div class="list-avatar" style="background:#f0fdf4;color:#1a8d5c;">JC</div>
+        <div class="list-row-content">
+          <div class="list-row-primary">Jane Chen — Monthly report</div>
+          <div class="list-row-secondary">Please find attached the Q3 metrics summary.</div>
+        </div>
+        <div class="list-row-meta">3h ago</div>
+      </div>
+      <div class="list-footer">
+        <button>Show 139 more</button>
+      </div>
+    </div>
+
+    <!-- List Card: Calendar -->
+    <div class="list-card">
+      <div class="list-card-header">
+        <div class="server-icon" style="background:#eef1fe;color:#4f6ef7;">📅</div>
+        <h3>Calendar</h3>
+        <span class="count">6 events</span>
+      </div>
+      <div class="list-group">
+        <div class="list-group-header">Mon, Jul 14</div>
+        <div class="list-row">
+          <div class="list-row-content">
+            <div class="list-row-primary">9:00 AM – 10:00 AM  Design tokens review</div>
+            <div class="list-row-secondary">Conference Room B</div>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <span class="chip">2 guests</span>
+          </div>
+        </div>
+        <div class="list-row">
+          <div class="list-row-content">
+            <div class="list-row-primary">11:00 AM – 12:00 PM  Sprint planning</div>
+            <div class="list-row-secondary">Zoom</div>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <span class="chip">↻ recurring</span>
+            <span class="chip">5 guests</span>
+          </div>
+        </div>
+      </div>
+      <div class="list-group">
+        <div class="list-group-header">Tue, Jul 15</div>
+        <div class="list-row">
+          <div class="list-row-content">
+            <div class="list-row-primary">2:00 PM – 3:30 PM  SDK handoff meeting</div>
+            <div class="list-row-secondary">Dextop office</div>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <span class="chip">3 guests</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- List Card: Drive -->
+    <div class="list-card">
+      <div class="list-card-header">
+        <div class="server-icon" style="background:#fef3e2;color:#b45309;">📁</div>
+        <h3>Drive</h3>
+        <span class="count">5 items</span>
+      </div>
+      <div class="list-row">
+        <div class="list-row-content">
+          <div class="list-row-primary">📁 Design Assets</div>
+          <div class="list-row-secondary">Folder · edited 2 days ago</div>
+        </div>
+        <span class="chip">folder</span>
+      </div>
+      <div class="list-row">
+        <div class="list-row-content">
+          <div class="list-row-primary">token-spec-v2.pdf</div>
+          <div class="list-row-secondary">2.4 MB · edited yesterday · shared with 3</div>
+        </div>
+        <span class="chip">application/pdf</span>
+      </div>
+      <div class="list-row">
+        <div class="list-row-content">
+          <div class="list-row-primary">mockup-components.html</div>
+          <div class="list-row-secondary">18 KB · edited today</div>
+        </div>
+        <span class="chip">text/html</span>
+      </div>
+    </div>
+
+    <!-- List Card: Slack -->
+    <div class="list-card">
+      <div class="list-card-header">
+        <div class="server-icon" style="background:#f0fdf4;color:#1a8d5c;">💬</div>
+        <h3>Slack · #general</h3>
+        <span class="count">8 messages</span>
+      </div>
+      <div class="list-row">
+        <div class="list-row-content">
+          <div class="list-row-primary">alex: Hey, did you see the new SDK?</div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <span class="chip">👍 3</span>
+          <span class="chip">2 replies</span>
+        </div>
+      </div>
+      <div class="list-row">
+        <div class="list-row-content">
+          <div class="list-row-primary">jordan: Yeah, the list-card extractor is solid.</div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <span class="chip">🎉 1</span>
+        </div>
+      </div>
+      <div class="list-row">
+        <div class="list-row-content">
+          <div class="list-row-primary">casey: Can we get a confirm-card variant for send?</div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <span class="chip">1 reply</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Card: Gmail -->
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <span class="server-badge">gmail</span>
+        <div>
+          <div class="detail-card-title">Re: SDK design tokens</div>
+          <div class="detail-card-subtitle">Marc Adrian &lt;marc@sapiens.ai&gt; · 2 minutes ago</div>
+        </div>
+      </div>
+      <div class="detail-card-body">
+        <div class="detail-field">
+          <div class="detail-field-label">To</div>
+          <div class="detail-field-value">Dex Team &lt;team@dextop.ai&gt;</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">From</div>
+          <div class="detail-field-value">Marc Adrian &lt;marc@sapiens.ai&gt;</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Date</div>
+          <div class="detail-field-value">Mon, Jul 14, 2025 at 3:42 PM</div>
+        </div>
+        <div class="detail-body">
+          Hi team, I've audited the UI components in the SDK repo. Here's what I found: the primitive card vocabulary (list-card, detail-card, editor-card, confirm-card) covers all connector results, and the generic media kinds handle tool outputs cleanly. The design tokens are consistent across all descriptor kinds — consistent border-radius, spacing scale, and a neutral surface palette. Let me know if you'd like the full mockup.
+        </div>
+        <div class="detail-attachments">
+          <div class="attachment-chip"><span class="icon">📎</span> mockup.html <span class="text-muted" style="font-size:var(--fs-xs);">18 KB</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor Card: Gmail Draft -->
+    <div class="editor-card">
+      <div class="editor-card-header">
+        <div class="server-icon" style="background:#eaf7f1;color:#1a8d5c;">✉</div>
+        <h3>Gmail</h3>
+        <span class="kind-badge"><span class="dot"></span> editor-card</span>
+      </div>
+      <div class="editor-card-body">
+        <div class="editor-field">
+          <div class="editor-field-label">
+            To
+            <span class="control-hint">chips</span>
+          </div>
+          <div class="editor-chips-input">
+            <div class="editor-chip">marc@sapiens.ai <span class="editor-chip-remove">✕</span></div>
+            <div class="editor-chip">jordan@dextop.ai <span class="editor-chip-remove">✕</span></div>
+            <input class="editor-chip-input" placeholder="add recipient…">
+          </div>
+        </div>
+        <div class="editor-field">
+          <div class="editor-field-label">
+            Subject
+            <span class="required">*</span>
+            <span class="control-hint">text</span>
+          </div>
+          <input class="editor-text-input" value="SDK Component Audit" placeholder="add subject…">
+        </div>
+        <div class="editor-field">
+          <div class="editor-field-label">
+            Body
+            <span class="control-hint">textarea</span>
+          </div>
+          <textarea class="editor-textarea" placeholder="write your message…">Hi team,
+
+I've completed the UI component audit for the dex-connector-ui-sdk. All descriptor kinds are accounted for and the design tokens are consistent.
+
+See attached mockup.
+
+Thanks,
+Marc</textarea>
+        </div>
+        <div class="editor-signoff">
+          <div class="editor-signoff-label">Sign-off</div>
+          <div class="editor-signoff-select">
+            <div class="editor-signoff-option">Best, Marc</div>
+            <div class="editor-signoff-option">Thanks! — Marc</div>
+            <div class="editor-signoff-option">Regards, Marc Adrian</div>
+          </div>
+        </div>
+      </div>
+      <div class="editor-footer">
+        <button class="btn btn-secondary">Save draft</button>
+        <button class="btn btn-primary">Send</button>
+      </div>
+    </div>
+
+    <!-- Confirm Card: Gmail Send -->
+    <div class="confirm-card">
+      <div class="confirm-banner info">
+        <span class="banner-icon">⚡</span>
+        Dex wants to send this email now — review before confirming.
+      </div>
+      <div class="confirm-card-body">
+        <div class="confirm-fields">
+          <div class="confirm-field">
+            <div class="confirm-field-label">To</div>
+            <div class="confirm-field-value">marc@sapiens.ai, jordan@dextop.ai</div>
+          </div>
+          <div class="confirm-field">
+            <div class="confirm-field-label">Subject</div>
+            <div class="confirm-field-value">SDK Component Audit</div>
+          </div>
+        </div>
+        <div class="confirm-body-preview">
+          Hi team,<br><br>
+          I've completed the UI component audit for the dex-connector-ui-sdk. All descriptor kinds are accounted for and the design tokens are consistent.<br><br>
+          See attached mockup.<br><br>
+          Thanks,<br>Marc
+        </div>
+        <div class="confirm-actions">
+          <button class="btn btn-secondary">Discard</button>
+          <button class="btn btn-primary">Confirm &amp; Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION: First-Party Families                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    First-Party Families <span class="tag">activity-strip · notes-envelope · tasks-envelope</span>
+  </div>
+  <div class="card-grid wide">
+
+    <!-- Activity Strip -->
+    <div class="activity-strip">
+      <div class="activity-strip-header">
+        <div class="server-icon" style="background:#eef1fe;color:#4f6ef7;">◉</div>
+        <h3 style="font-size:var(--fs-md);font-weight:600;flex:1;">Browser Activity</h3>
+        <span class="family-badge browser">browser</span>
+        <span class="activity-steps">7 steps</span>
+      </div>
+      <div class="activity-frames">
+        <!-- Thought -->
+        <div class="activity-frame">
+          <div class="activity-frame-thought">
+            <div class="thought-icon">💭</div>
+            <div class="thought-text">I need to find the design tokens used in the SDK components.</div>
+          </div>
+        </div>
+        <div class="activity-connector">›</div>
+        <!-- Action -->
+        <div class="activity-frame">
+          <div class="activity-frame-action">
+            <div class="icon-circle">🌐</div>
+            <div class="action-label">Go to dextop.internal/docs</div>
+          </div>
+        </div>
+        <div class="activity-connector">›</div>
+        <!-- Screenshot -->
+        <div class="activity-frame screenshot">
+          <div class="activity-frame-img-placeholder">screenshot<br>1920×1080</div>
+          <div class="activity-frame-reasoning">Navigated to the design system docs page.</div>
+        </div>
+        <div class="activity-connector">›</div>
+        <!-- Action -->
+        <div class="activity-frame">
+          <div class="activity-frame-action">
+            <div class="icon-circle">🔍</div>
+            <div class="action-label">Click search input</div>
+          </div>
+        </div>
+        <div class="activity-connector">›</div>
+        <!-- Action -->
+        <div class="activity-frame">
+          <div class="activity-frame-action">
+            <div class="icon-circle">⌨</div>
+            <div class="action-label">Type "design tokens"</div>
+          </div>
+        </div>
+        <div class="activity-connector">›</div>
+        <!-- Screenshot -->
+        <div class="activity-frame screenshot">
+          <div class="activity-frame-img-placeholder" style="background:linear-gradient(135deg,#818cf8 0%,#4f46e5 100%);">search<br>results</div>
+          <div class="activity-frame-reasoning">Found the token reference page with 14 component tokens.</div>
+        </div>
+        <div class="activity-connector">›</div>
+        <!-- Thought -->
+        <div class="activity-frame">
+          <div class="activity-frame-thought">
+            <div class="thought-icon">💭</div>
+            <div class="thought-text">Extracted the full token set. Ready to render the mockup.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Envelope -->
+    <div class="envelope-card">
+      <div class="envelope-card-header">
+        <div class="envelope-icon" style="background:#fef3e2;color:#b45309;">📝</div>
+        <h3>Notes</h3>
+        <span class="kind-badge"><span class="dot" style="background:#b45309;"></span> notes-envelope</span>
+      </div>
+      <div class="envelope-card-body">
+        <div class="envelope-note">
+          <div class="envelope-note-title">SDK Token Spec v2</div>
+          <div class="envelope-note-meta">Design · updated 2 hours ago</div>
+          <div class="envelope-note-snippet">Updated color tokens to match the new Dextop palette. Border radius standardized to 6/10/14px scale.</div>
+        </div>
+        <div class="envelope-note">
+          <div class="envelope-note-title">Connector Extractor Notes</div>
+          <div class="envelope-note-meta">Engineering · updated 1 day ago</div>
+          <div class="envelope-note-snippet">All server extractors return null on mismatch — degrade gracefully, never throw.</div>
+        </div>
+        <div style="margin-top:var(--space-5);">
+          <div style="font-size:var(--fs-xs);font-weight:600;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3);">Folders</div>
+          <div class="flex flex-wrap">
+            <span class="envelope-folder">📁 Design <span class="text-muted">(12)</span></span>
+            <span class="envelope-folder">📁 Engineering <span class="text-muted">(47)</span></span>
+            <span class="envelope-folder">📁 Meeting Notes <span class="text-muted">(8)</span></span>
+          </div>
+        </div>
+        <div style="margin-top:var(--space-5);">
+          <div style="font-size:var(--fs-xs);font-weight:600;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3);">Tags</div>
+          <div class="flex flex-wrap">
+            <span class="envelope-tag">#tokens</span>
+            <span class="envelope-tag">#sdk</span>
+            <span class="envelope-tag">#ui</span>
+            <span class="envelope-tag">#connector</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks Envelope -->
+    <div class="envelope-card">
+      <div class="envelope-card-header">
+        <div class="envelope-icon" style="background:#eaf7f1;color:#1a8d5c;">✓</div>
+        <h3>Tasks</h3>
+        <span class="kind-badge"><span class="dot" style="background:#1a8d5c;"></span> tasks-envelope</span>
+      </div>
+      <div class="envelope-card-body">
+        <div class="task-item">
+          <div class="task-checkbox"></div>
+          <div class="task-content">
+            <div class="task-title"><span class="task-key">TSK-75</span>Audit UI components in dex-connector-ui-sdk</div>
+            <div class="task-meta">Work · In Progress</div>
+          </div>
+          <span class="task-status in_progress">In Progress</span>
+        </div>
+        <div class="task-item">
+          <div class="task-checkbox"></div>
+          <div class="task-content">
+            <div class="task-title"><span class="task-key">TSK-74</span>Extract design tokens from components</div>
+            <div class="task-meta">Work · Not Started</div>
+          </div>
+          <span class="task-status not_started">Not Started</span>
+        </div>
+        <div class="task-item">
+          <div class="task-checkbox checked"></div>
+          <div class="task-content">
+            <div class="task-title done"><span class="task-key">TSK-73</span>Port generic extractors to pure TS</div>
+            <div class="task-meta">Work · Completed</div>
+          </div>
+          <span class="task-status completed">Done</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION: Design Token Summary                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    Extracted Design Tokens <span class="tag">CSS custom properties</span>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#eef1fe;color:#4f6ef7;">🎨</div>
+        <h3>Colors</h3>
+      </div>
+      <div class="card-body" style="padding:var(--space-4);">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);">
+          <div style="aspect-ratio:1;background:#111318;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#5f636b;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#9aa0a6;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#4f6ef7;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#1a8d5c;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#d97706;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#dc2626;border-radius:var(--radius-sm);"></div>
+          <div style="aspect-ratio:1;background:#f8f9fb;border-radius:var(--radius-sm);border:1px solid #e2e5ea;"></div>
+        </div>
+        <div style="margin-top:var(--space-4);font-size:var(--fs-xs);color:var(--color-text-tertiary);font-family:var(--font-mono);">
+          --color-text-primary: #111318<br>
+          --color-accent: #4f6ef7<br>
+          --color-success: #1a8d5c · --color-warning: #d97706 · --color-danger: #dc2626
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#fef3e2;color:#b45309;">📐</div>
+        <h3>Spacing &amp; Radius</h3>
+      </div>
+      <div class="card-body" style="padding:var(--space-4);font-size:var(--fs-sm);font-family:var(--font-mono);color:var(--color-text-secondary);line-height:var(--line-height-lg);">
+        --space-1: 4px · --space-2: 6px · --space-3: 8px<br>
+        --space-4: 10px · --space-5: 12px · --space-6: 16px<br>
+        --space-8: 20px · --space-10: 24px · --space-12: 32px<br><br>
+        --radius-sm: 6px · --radius-md: 10px<br>
+        --radius-lg: 14px · --radius-xl: 18px
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#eaf7f1;color:#1a8d5c;">🔤</div>
+        <h3>Typography</h3>
+      </div>
+      <div class="card-body" style="padding:var(--space-4);font-size:var(--fs-sm);color:var(--color-text-secondary);line-height:var(--line-height-lg);">
+        Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto<br>
+        Mono: 'SF Mono', 'JetBrains Mono', Consolas<br><br>
+        --fs-xs: 11px · --fs-sm: 12px · --fs-base: 13px<br>
+        --fs-md: 14px · --fs-lg: 15px · --fs-xl: 17px · --fs-2xl: 20px
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:#f0f2f5;color:#111318;">🃏</div>
+        <h3>Descriptor Kinds (21 total)</h3>
+      </div>
+      <div class="card-body" style="padding:var(--space-4);">
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+          <span class="kind-badge"><span class="dot"></span> image</span>
+          <span class="kind-badge"><span class="dot" style="background:#b45309;"></span> svg</span>
+          <span class="kind-badge"><span class="dot" style="background:#1a8d5c;"></span> html</span>
+          <span class="kind-badge"><span class="dot" style="background:#dc2626;"></span> video</span>
+          <span class="kind-badge"><span class="dot" style="background:#4f6ef7;"></span> code</span>
+          <span class="kind-badge"><span class="dot" style="background:#d97706;"></span> diff</span>
+          <span class="kind-badge"><span class="dot" style="background:#9aa0a6;"></span> markdown</span>
+          <span class="kind-badge"><span class="dot"></span> search-results</span>
+          <span class="kind-badge"><span class="dot" style="background:#b45309;"></span> fetch</span>
+          <span class="kind-badge"><span class="dot" style="background:#1a8d5c;"></span> bash-output</span>
+          <span class="kind-badge"><span class="dot" style="background:#4f6ef7;"></span> file-read</span>
+          <span class="kind-badge"><span class="dot" style="background:#dc2626;"></span> mcp-result</span>
+          <span class="kind-badge"><span class="dot" style="background:#d97706;"></span> json</span>
+          <span class="kind-badge"><span class="dot" style="background:#9aa0a6;"></span> browser-selection</span>
+          <span class="kind-badge"><span class="dot"></span> activity-strip</span>
+          <span class="kind-badge"><span class="dot" style="background:#1a8d5c;"></span> notes-envelope</span>
+          <span class="kind-badge"><span class="dot" style="background:#4f6ef7;"></span> tasks-envelope</span>
+          <span class="kind-badge"><span class="dot"></span> list-card</span>
+          <span class="kind-badge"><span class="dot" style="background:#b45309;"></span> detail-card</span>
+          <span class="kind-badge"><span class="dot" style="background:#dc2626;"></span> editor-card</span>
+          <span class="kind-badge"><span class="dot" style="background:#d97706;"></span> confirm-card</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

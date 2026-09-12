@@ -139,6 +139,28 @@ export interface BrowserSelectionMedia {
   label?: string;
 }
 
+/**
+ * MCP Apps / MCP-UI interop channel (SEP-1865). When a tool result carries a
+ * `ui://` UIResource, the host renders it in a SANDBOXED IFRAME inside the
+ * standard card chrome — the one case where the server authors the UI.
+ * Prefer host-owned descriptors (list-card, detail-card, …) whenever a
+ * connector's result shape is known; this kind is the fallback that makes
+ * third-party MCP Apps servers "just work".
+ */
+export interface UiResourceMedia {
+  kind: "ui-resource";
+  server: string;
+  tool: string;
+  /** `ui://` resource URI — the host resolves it via resources/read when no html is inlined. */
+  resourceUri: string;
+  /** Pre-delivered HTML (MCP-UI inlines the document in the resource text/blob). */
+  html?: string;
+  /** e.g. "text/html;profile=mcp-apps" */
+  mimeType?: string;
+  /** SEP-1865 CSP directives from `_meta.ui.csp` (e.g. connectDomains, frameDomains). */
+  csp?: Record<string, string[]>;
+}
+
 // ─── First-party family kinds ───
 
 /** One frame in a Computer Use / Browser activity strip. */
@@ -300,6 +322,7 @@ export type ToolMedia =
   | McpResultMedia
   | JsonMedia
   | BrowserSelectionMedia
+  | UiResourceMedia
   | ActivityStripMedia
   | NotesEnvelopeMedia
   | TasksEnvelopeMedia
