@@ -203,6 +203,8 @@ export function extractToolMedia(
   if (builtin) return builtin(part);
 
   // Server-prefixed id ({server}_{tool}) → try the server's extractor table.
+  // A table hit that returns null falls through (the shape didn't match the
+  // contract) rather than ending the chain.
   const idx = part.tool.indexOf("_");
   if (idx > 0) {
     const server = part.tool.slice(0, idx);
@@ -210,7 +212,10 @@ export function extractToolMedia(
     const serverTable = SERVER_EXTRACTORS[server];
     if (serverTable) {
       const hit = serverTable[rawTool];
-      if (hit) return hit(part);
+      if (hit) {
+        const result = hit(part);
+        if (result) return result;
+      }
     }
   }
 
