@@ -13,7 +13,7 @@ export interface ToolPartLike {
     input: Record<string, unknown>;
     output?: unknown;
     metadata?: Record<string, unknown> | null;
-    title?: string;
+    title?: string | null;
   };
 }
 
