@@ -329,4 +329,45 @@ export type ToolMedia =
   | ListCardMedia
   | DetailCardMedia
   | EditorCardMedia
-  | ConfirmCardMedia;
+  | ConfirmCardMedia
+  | TableCardMedia
+  | StatStripMedia
+  | TrackerEnvelopeMedia;
+
+// ─── v0.2 primitive kinds (Tier-C connectors + tracker port) ───
+
+/** Generic tabular result (Sheets, Office sheet_read, Postgres/Supabase, Airtable). */
+export interface TableCardMedia {
+  kind: "table-card";
+  server: string;
+  tool: string;
+  title: string;
+  columns: string[];
+  rows: string[][];
+  /** Rows shown inline before truncation. */
+  visibleRows?: number;
+  totalRows?: number;
+}
+
+/** Summary tiles (Stripe balance, Linear project stats, Todoist productivity). */
+export interface StatStripMedia {
+  kind: "stat-strip";
+  server: string;
+  tool: string;
+  title: string;
+  stats: Array<{ value: string; label: string; accent?: boolean }>;
+}
+
+/** Tracker ticket envelope (Dextop tracker / tracker_* / dev_board contract). */
+export interface TrackerEnvelopeMedia {
+  kind: "tracker-envelope";
+  server: "tracker" | "dev_board";
+  action: string;
+  tickets: Array<{
+    key?: string;
+    title: string;
+    status?: string;
+    assignee?: string;
+    column?: string;
+  }>;
+}

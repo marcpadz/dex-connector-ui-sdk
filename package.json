@@ -1,6 +1,6 @@
 {
   "name": "dex-connector-ui-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Harness-agnostic agent capability SDK: turn raw tool-call results (builtin tools + MCP connectors) into structured UI descriptors. Pure data — the host renders.",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,6 +16,7 @@
     "README.md"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc -p tsconfig.json",
     "lint": "tsc --noEmit",
     "test": "vitest run"
