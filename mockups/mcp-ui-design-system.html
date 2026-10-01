@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Inline UI — Refined Component System</title>
+<style>
+/* ═══════════════ Tokens — DexLab tokens.css values + refined motion spec ═══════════════ */
+:root {
+  color-scheme: light;
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F8FAFC;
+  --surface-tertiary: #F1F5F9;
+  --surface-chat: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-tertiary: #64748B;
+  --text-faint: #94A3B8;
+  --border-default: rgba(59, 130, 246, 0.12);
+  --border-heavy: rgba(59, 130, 246, 0.28);
+  --border-subtle: rgba(59, 130, 246, 0.06);
+  --brand-primary: #4B3FE3;
+  --brand-primary-hover: #4338CA;
+  --brand-primary-light: color-mix(in srgb, var(--brand-primary) 10%, var(--surface-primary));
+  --color-success: #15A877;
+  --color-warning: #E27900;
+  --color-destructive: #E8463A;
+  --status-success-surface-l1: rgba(21, 168, 119, 0.12);
+  --status-warning-surface-l1: rgba(226, 121, 0, 0.12);
+  --status-error-surface-l1: rgba(232, 70, 58, 0.12);
+  --app-frame-bg: #F0F6FF;
+  --user-bubble-bg: #F0F6FF;
+  --card-radius: 10px;
+  --panel-radius: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07);
+  --shadow-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18);
+  /* Motion spec — emil curves + apple damping discipline + DexLab ceilings */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --t-press: 120ms;
+  --t-hover: 120ms;
+  --t-state: 200ms;
+  --t-reveal: 260ms;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* Tonal elevation — each layer ~5-8% lighter than the one beneath (ux §3.1) */
+  --app-frame-bg: hsl(234 28% 8%);
+  --surface-primary: hsl(234 22% 12%);
+  --surface-secondary: hsl(234 20% 16%);
+  --surface-tertiary: hsl(234 18% 20%);
+  --surface-chat: hsl(234 22% 12%);
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
+  --text-faint: #64748B;
+  --border-default: rgba(148, 163, 184, 0.14);
+  --border-heavy: rgba(148, 163, 184, 0.30);
+  --border-subtle: rgba(148, 163, 184, 0.08);
+  --brand-primary: #7C72FF; /* desaturated-lift for dark (ux §3.2) */
+  --brand-primary-hover: #8F86FF;
+  --brand-primary-light: color-mix(in srgb, #7C72FF 16%, var(--surface-primary));
+  --color-success: #34C48D;
+  --color-warning: #F0A04B;
+  --color-destructive: #F87171;
+  --status-success-surface-l1: rgba(52, 196, 141, 0.16);
+  --status-warning-surface-l1: rgba(240, 160, 75, 0.16);
+  --status-error-surface-l1: rgba(248, 113, 113, 0.16);
+  --user-bubble-bg: hsl(234 24% 15%);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 12px -2px rgba(0,0,0,0.5);
+  --shadow-lg: 0 16px 40px -8px rgba(0,0,0,0.6);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--app-frame-bg);
+  color: var(--text-primary);
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+button { font-family: var(--font); cursor: pointer; color: inherit; }
+::selection { background: var(--brand-primary-light); }
+
+/* ═══════════════ Page chrome — translucent material (apple §12) ═══════════════ */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 28px;
+  background: color-mix(in srgb, var(--surface-primary) 62%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+.topbar h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.topbar h1 span { color: var(--text-tertiary); font-weight: 500; }
+.topbar .spacer { flex: 1; }
+.theme-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--border-default); background: var(--surface-primary);
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  transition: transform var(--t-press) ease-out, border-color var(--t-hover) ease;
+}
+.theme-btn:hover { border-color: var(--border-heavy); }
+.theme-btn:active { transform: scale(0.97); }
+
+/* Hero — wide, 2 lines max, no badges (gpt-taste §3) */
+.hero { max-width: 1060px; margin: 0 auto; padding: 72px 28px 20px; }
+.hero h2 {
+  font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+  font-weight: 800; letter-spacing: -0.03em; line-height: 1.08;
+  max-width: 22ch;
+}
+.hero p { margin-top: 16px; font-size: 15px; line-height: 1.6; color: var(--text-secondary); max-width: 62ch; }
+.hero .principles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.principle {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  background: var(--surface-primary); border: 1px solid var(--border-default);
+  border-radius: 999px; padding: 7px 13px;
+  transition: transform var(--t-press) ease-out;
+}
+.principle:active { transform: scale(0.97); }
+.principle svg { width: 14px; height: 14px; color: var(--brand-primary); }
+
+/* ═══════════════ Sections — cinematic chapters (gpt-taste §2 spacing) ═══════════════ */
+.section { max-width: 1240px; margin: 0 auto; padding: 72px 28px 8px; }
+.section:last-of-type { padding-bottom: 120px; }
+.sec-head { margin-bottom: 28px; max-width: 72ch; }
+.sec-head h3 { font-size: 22px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.15; }
+.sec-head p { margin-top: 8px; font-size: 13.5px; line-height: 1.6; color: var(--text-secondary); }
+.sec-head .usedby { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.usedby .u {
+  font-family: var(--mono); font-size: 10.5px; color: var(--text-tertiary);
+  background: var(--surface-secondary); border: 1px solid var(--border-default);
+  border-radius: 6px; padding: 3px 8px;
+}
+
+/* Frames: desktop column + phone, side by side; stack under 1100px */
+.frames { display: grid; grid-template-columns: minmax(0, 720px) 390px; gap: 32px; align-items: start; justify-content: center; }
+@media (max-width: 1120px) { .frames { grid-template-columns: minmax(0, 720px); } }
+@media (max-width: 760px) { .frames { grid-template-columns: minmax(0, 1fr); } }
+.frame-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-faint); margin-bottom: 10px;
+}
+.frame-desktop { min-width: 0; }
+.chatcol { background: var(--app-frame-bg); border-radius: var(--panel-radius); padding: 20px; border: 1px solid var(--border-subtle); }
+.phone-wrap { position: sticky; top: 76px; }
+@media (max-width: 1120px) { .phone-wrap { position: static; max-width: 390px; } }
+.phone {
+  background: color-mix(in srgb, var(--text-primary) 92%, transparent);
+  border-radius: 46px; padding: 10px;
+  box-shadow: var(--shadow-lg);
+}
+.phone-screen {
+  background: var(--app-frame-bg);
+  border-radius: 38px; overflow: hidden; height: 660px; overflow-y: auto;
+  scrollbar-width: none;
+}
+.phone-screen::-webkit-scrollbar { display: none; }
+.phone-notch { width: 108px; height: 26px; background: color-mix(in srgb, var(--text-primary) 92%, transparent); border-radius: 0 0 16px 16px; margin: 0 auto; position: relative; z-index: 5; }
+.phone-pad { padding: 10px 12px 24px; }
+
+/* Message scaffolding inside frames */
+.msg-user { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+.msg-user .bubble {
+  max-width: 80%; background: var(--user-bubble-bg);
+  padding: 9px 14px; border-radius: 16px 16px 5px 16px;
+  font-size: 13.5px; line-height: 1.5;
+}
+.lead { font-size: 13px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 12px; }
+
+/* ═══════════════ Universal card chrome ═══════════════ */
+.card {
+  border-radius: var(--panel-radius);
+  border: 1px solid var(--border-default);
+  background: var(--surface-primary);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--t-state) ease;
+}
+.card + .card { margin-top: 16px; }
+.card-hd {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; min-height: 40px;
+  background: var(--surface-secondary);
+  border-bottom: 1px solid var(--border-default);
+}
+.mark { width: 22px; height: 22px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex: none; color: #fff; }
+.mark svg { width: 13px; height: 13px; }
+.m-gmail { background: #EA4335; } .m-gcal { background: #1A73E8; } .m-gdrive { background: #FBBC04; }
+.m-slack { background: #4A154B; } .m-dex { background: var(--brand-primary); } .m-cu { background: #0F172A; }
+[data-theme="dark"] .m-cu { background: #E2E8F0; color: #0F172A; }
+.hd-name { font-size: 12.5px; font-weight: 650; color: var(--text-secondary); }
+.tool-chip { font-family: var(--mono); font-size: 10px; color: var(--text-tertiary); background: var(--surface-tertiary); border: 1px solid var(--border-default); border-radius: 5px; padding: 1px 6px; }
+.hd-chip { font-size: 10.5px; font-weight: 650; color: var(--brand-primary); background: var(--brand-primary-light); border-radius: 999px; padding: 2px 8px; }
+.hd-grow { flex: 1; min-width: 0; }
+.icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 7px; border: 0; background: transparent;
+  color: var(--text-tertiary); flex: none;
+  transition: background var(--t-hover) ease, transform var(--t-press) ease-out;
+}
+.icon-btn:hover { background: var(--surface-tertiary); }
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn svg { width: 15px; height: 15px; }
+.card-ft { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border-default); flex-wrap: wrap; }
+.act {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--border-default); background: var(--surface-primary);
+  color: var(--text-secondary); font-size: 12px; font-weight: 550;
+  transition: transform var(--t-press) ease-out, border-color var(--t-hover) ease, background var(--t-hover) ease;
+}
+.act svg { width: 13px; height: 13px; }
+.act:hover { border-color: var(--border-heavy); color: var(--text-primary); }
+.act:active { transform: scale(0.97); }
+.act:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.act.primary { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; font-weight: 650; }
+.act.primary:hover { background: var(--brand-primary-hover); border-color: var(--brand-primary-hover); color: #fff; }
+.act.danger { color: var(--color-destructive); border-color: color-mix(in srgb, var(--color-destructive) 30%, transparent); }
+.act.link { border-color: transparent; background: transparent; color: var(--brand-primary); }
+.act.link:hover { background: var(--brand-primary-light); }
+.ft-note { font-size: 10.5px; color: var(--text-tertiary); margin-left: auto; }
+
+/* ═══════════════ ListCard ═══════════════ */
+.grp { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); padding: 10px 14px 4px; }
+.row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 14px; min-height: 48px;
+  border-top: 1px solid var(--border-subtle);
+  cursor: pointer; position: relative;
+  transition: background var(--t-hover) ease, transform var(--t-press) ease-out;
+}
+.row:hover { background: var(--surface-secondary); }
+.row:active { background: var(--surface-tertiary); transform: scale(0.995); }
+.row.unread .r-subject { font-weight: 700; }
+.row.unread::before {
+  content: ""; position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--brand-primary);
+}
+.avatar {
+  width: 30px; height: 30px; border-radius: 9px; flex: none; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11.5px; font-weight: 700; color: #fff;
+}
+.av-1 { background: #4B3FE3; } .av-2 { background: #15A877; } .av-3 { background: #E27900; } .av-4 { background: #F87454; } .av-6 { background: #334155; }
+.r-main { flex: 1; min-width: 0; }
+.r-top { display: flex; align-items: baseline; gap: 8px; }
+.r-from { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: none; }
+.r-subject { font-size: 13px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-snip { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.r-meta { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 2px; }
+.r-time { font-size: 10.5px; color: var(--text-faint); }
+.r-ic { display: flex; gap: 4px; color: var(--text-faint); }
+.r-ic svg { width: 12px; height: 12px; }
+/* expand-in-place: grid-rows technique — interruptible, no jump */
+.rowbody-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--t-reveal) var(--ease-out); }
+.rowbody-wrap.open { grid-template-rows: 1fr; }
+.rowbody { overflow: hidden; min-height: 0; }
+.rowbody-inner { padding: 2px 14px 12px 56px; font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); opacity: 0; transform: translateY(-2px); transition: opacity var(--t-state) ease, transform var(--t-state) ease; }
+.rowbody-wrap.open .rowbody-inner { opacity: 1; transform: none; transition-delay: 60ms; }
+.rb-actions { display: flex; gap: 6px; margin-top: 10px; }
+/* swipe-away archive (undo pattern) */
+.row.removing { transform: translateX(110%); opacity: 0; transition: transform 220ms var(--ease-in-out), opacity 180ms ease; }
+/* stagger entries */
+.stagger > * { opacity: 0; transform: translateY(6px); animation: rise 340ms var(--ease-out) forwards; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+/* ═══════════════ EditorCard ═══════════════ */
+.fld { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); }
+.fld-row { display: flex; align-items: flex-start; gap: 12px; }
+.fld > label, .fld-row > label {
+  display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.09em; color: var(--text-faint); margin-bottom: 6px;
+}
+.fld-row > label { margin-bottom: 0; margin-top: 3px; width: 60px; flex: none; }
+.fld-row .fctl { flex: 1; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; color: var(--text-primary);
+  background: var(--surface-tertiary); border: 1px solid var(--border-default);
+  border-radius: 999px; padding: 4px 5px 4px 5px;
+  animation: chipin 200ms var(--ease-out);
+}
+@keyframes chipin { from { opacity: 0; transform: scale(0.95); } }
+.chip .avatar { width: 18px; height: 18px; border-radius: 50%; font-size: 8px; margin: 0; }
+.chip-x {
+  width: 16px; height: 16px; border-radius: 50%; border: 0; background: transparent;
+  color: var(--text-faint); display: flex; align-items: center; justify-content: center;
+  transition: background var(--t-hover) ease, color var(--t-hover) ease, transform var(--t-press) ease-out;
+}
+.chip-x:hover { background: var(--status-error-surface-l1); color: var(--color-destructive); }
+.chip-x:active { transform: scale(0.9); }
+.chip-x svg { width: 9px; height: 9px; }
+.chip-input { border: 0; outline: 0; font-family: var(--font); font-size: 12.5px; min-width: 110px; flex: 1; background: transparent; color: var(--text-primary); padding: 4px 0; }
+.chip-input::placeholder { color: var(--text-faint); }
+.fld-input { border: 0; outline: 0; font-family: var(--font); font-size: 13.5px; width: 100%; background: transparent; color: var(--text-primary); }
+.fld-input.subject { font-size: 14.5px; font-weight: 650; letter-spacing: -0.015em; }
+textarea.fld-input { resize: none; line-height: 1.6; overflow: hidden; min-height: 88px; }
+.fld-ghost { font-size: 11.5px; color: var(--brand-primary); font-weight: 600; background: transparent; border: 0; padding: 3px 0; white-space: nowrap; }
+.fld-ghost:hover { text-decoration: underline; }
+.signoff { display: flex; gap: 6px; flex-wrap: wrap; }
+.so-chip {
+  font-size: 12px; color: var(--text-secondary); background: var(--surface-primary);
+  border: 1px solid var(--border-default); border-radius: 999px; padding: 6px 12px;
+  min-height: 32px;
+  transition: all var(--t-state) var(--ease-out);
+}
+.so-chip:hover { border-color: var(--brand-primary); }
+.so-chip:active { transform: scale(0.97); }
+.so-chip.on { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; font-weight: 650; }
+.atch-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.atch-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11.5px; color: var(--text-secondary);
+  background: var(--surface-tertiary); border: 1px solid var(--border-default);
+  border-radius: 9px; padding: 7px 10px;
+  transition: transform var(--t-press) ease-out;
+}
+.atch-chip:active { transform: scale(0.97); }
+.atch-chip b { color: var(--text-faint); font-weight: 500; font-size: 10px; }
+.atch-chip svg { width: 13px; height: 13px; color: var(--text-tertiary); }
+.atch-add {
+  border: 1px dashed var(--border-heavy); border-radius: 9px; background: transparent;
+  color: var(--text-secondary); font-size: 11.5px; font-weight: 550;
+  padding: 7px 11px; display: inline-flex; align-items: center; gap: 6px; min-height: 32px;
+  transition: all var(--t-hover) ease, transform var(--t-press) ease-out;
+}
+.atch-add:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+.atch-add:active { transform: scale(0.97); }
+.atch-add svg { width: 13px; height: 13px; }
+.ring { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--brand-primary-light); border-top-color: var(--brand-primary); animation: spin 0.9s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* desktop footer vs mobile sticky bar */
+.editor-ft { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-default); }
+.autosave { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-faint); margin-left: auto; }
+.autosave .tick { width: 5px; height: 5px; border-radius: 50%; background: var(--color-success); }
+.mobile-actionbar {
+  position: sticky; bottom: 0; z-index: 10;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--surface-primary) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 -1px 0 var(--border-subtle);
+}
+/* receipt morph — blur crossfade (emil) */
+.receipt { display: flex; align-items: center; gap: 12px; padding: 16px; animation: receiptin 240ms var(--ease-out); }
+@keyframes receiptin { from { opacity: 0; transform: scale(0.95); filter: blur(2px); } }
+.receipt .ok { width: 34px; height: 34px; border-radius: 50%; background: var(--status-success-surface-l1); display: flex; align-items: center; justify-content: center; flex: none; }
+.receipt .ok svg { width: 16px; height: 16px; color: var(--color-success); }
+.receipt .t1 { font-size: 13.5px; font-weight: 650; }
+.receipt .t2 { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; }
+.receipt .act { margin-left: auto; }
+.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; animation: spin 0.7s linear infinite; flex: none; }
+
+/* ═══════════════ ConfirmCard ═══════════════ */
+.c-banner { display: flex; align-items: center; gap: 9px; padding: 10px 14px; background: var(--brand-primary-light); border-bottom: 1px solid var(--border-default); font-size: 12px; color: var(--text-secondary); }
+.c-banner svg { width: 14px; height: 14px; color: var(--brand-primary); flex: none; }
+.c-banner b { color: var(--brand-primary); }
+.c-banner.destructive { background: var(--status-error-surface-l1); }
+.c-banner.destructive b { color: var(--color-destructive); }
+.c-banner.destructive svg { color: var(--color-destructive); }
+.pv { padding: 4px 0 0; }
+.pv .fld { border-bottom: 1px solid var(--border-subtle); }
+.pv-text { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ═══════════════ DetailCard ═══════════════ */
+.d-head { padding: 16px 16px 14px; border-bottom: 1px solid var(--border-default); }
+.d-subject { font-size: 16.5px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.25; }
+.d-fromrow { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.d-fromrow .name { font-size: 13px; font-weight: 600; }
+.d-fromrow .addr { font-size: 11.5px; color: var(--text-tertiary); }
+.d-to { font-size: 11.5px; color: var(--text-tertiary); margin-left: auto; text-align: right; flex: none; }
+.d-body { padding: 16px; font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); }
+.d-body p + p { margin-top: 10px; }
+.atch { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 14px; }
+
+/* ═══════════════ ActivityStrip (Computer Use) ═══════════════ */
+.strip-wrap { padding: 14px; background: var(--surface-secondary); }
+.strip {
+  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 12px;
+  scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.strip::-webkit-scrollbar { display: none; }
+.step { flex: none; width: 200px; scroll-snap-align: start; }
+.step.scr { animation: stepin 320ms var(--ease-out) backwards; }
+@keyframes stepin { from { opacity: 0; transform: translateX(14px) scale(0.96); } }
+.shot {
+  border-radius: 9px; overflow: hidden; border: 1px solid var(--border-default);
+  background: var(--surface-primary); box-shadow: var(--shadow-sm);
+  transition: transform var(--t-state) var(--ease-out), box-shadow var(--t-state) ease;
+  cursor: pointer;
+}
+.shot:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.shot:active { transform: scale(0.98); }
+.shot svg { display: block; width: 100%; height: auto; }
+.step-cap { font-size: 10.5px; line-height: 1.5; color: var(--text-tertiary); margin-top: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.step-cap b { color: var(--text-secondary); font-weight: 600; }
+.chipstep {
+  flex: none; align-self: center; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 600; color: var(--text-secondary);
+  background: var(--surface-primary); border: 1px solid var(--border-default);
+  border-radius: 999px; padding: 6px 11px; box-shadow: var(--shadow-sm);
+  animation: stepin 320ms var(--ease-out) backwards;
+}
+.chipstep svg { width: 11px; height: 11px; color: var(--brand-primary); }
+.strip-ft { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-default); }
+.running-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand-primary); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ═══════════════ Agenda + Picker ═══════════════ */
+.cal-time { font-family: var(--mono); font-size: 11px; color: var(--text-tertiary); width: 68px; flex: none; padding-top: 2px; line-height: 1.4; }
+.cal-bar { width: 3px; border-radius: 2px; align-self: stretch; flex: none; }
+.row.dim { opacity: 0.55; }
+.r-chip { font-size: 10px; font-weight: 600; color: var(--text-tertiary); background: var(--surface-tertiary); border-radius: 5px; padding: 1px 6px; flex: none; }
+.conflict { width: 7px; height: 7px; border-radius: 50%; background: var(--color-warning); flex: none; margin-top: 6px; }
+.slotgrid { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; }
+.slot {
+  font-size: 11.5px; color: var(--text-secondary); text-align: left;
+  background: var(--surface-primary); border: 1px solid var(--border-default);
+  border-radius: 10px; padding: 8px 11px; min-height: 44px;
+  transition: all var(--t-state) var(--ease-out);
+}
+.slot b { display: block; font-weight: 650; color: var(--text-primary); font-size: 12px; }
+.slot span { font-size: 10px; color: var(--color-success); font-weight: 600; }
+.slot:hover { border-color: var(--border-heavy); }
+.slot:active { transform: scale(0.97); }
+.slot.on { border-color: var(--brand-primary); background: var(--brand-primary-light); box-shadow: 0 0 0 1px var(--brand-primary); }
+.slot.on span { color: var(--brand-primary); }
+
+/* ═══════════════ Drive glyph rows ═══════════════ */
+.docglyph { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 1px; }
+.docglyph svg { width: 14px; height: 14px; }
+.g-docs { background: color-mix(in srgb, #4285F4 14%, var(--surface-primary)); color: #4285F4; }
+.g-sheets { background: color-mix(in srgb, #0F9D58 14%, var(--surface-primary)); color: #0F9D58; }
+.g-pdf { background: color-mix(in srgb, #EA4335 14%, var(--surface-primary)); color: #EA4335; }
+.g-folder { background: color-mix(in srgb, #5F6368 14%, var(--surface-primary)); color: #5F6368; }
+[data-theme="dark"] .g-docs { color: #7BAAFF; } [data-theme="dark"] .g-sheets { color: #4ED49A; }
+[data-theme="dark"] .g-pdf { color: #FF8A7E; } [data-theme="dark"] .g-folder { color: #A8B3C4; }
+.ppl { display: flex; }
+.ppl .avatar { width: 20px; height: 20px; font-size: 8px; border-radius: 50%; border: 2px solid var(--surface-primary); margin-left: -6px; }
+.ppl .avatar:first-child { margin-left: 0; }
+
+/* ═══════════════ ThreadCard ═══════════════ */
+.bubble-row { display: flex; gap: 10px; padding: 9px 14px; }
+.bubble { max-width: 80%; background: var(--surface-tertiary); border-radius: 4px 14px 14px 14px; padding: 9px 12px; font-size: 12.5px; line-height: 1.55; color: var(--text-primary); }
+.bubble.me { background: var(--brand-primary-light); border-radius: 14px 4px 14px 14px; }
+.bubble-row .b-name { font-size: 11px; font-weight: 650; color: var(--text-secondary); margin-bottom: 3px; }
+.reacts { display: flex; gap: 4px; margin-top: 6px; }
+.react {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; background: var(--surface-secondary); border: 1px solid var(--border-default);
+  border-radius: 999px; padding: 2px 8px; color: var(--text-secondary);
+  transition: transform var(--t-press) ease-out, border-color var(--t-hover) ease;
+}
+.react:active { transform: scale(0.94); }
+.react.mine { border-color: var(--brand-primary); color: var(--brand-primary); }
+.thread-compose { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-default); }
+.thread-compose input {
+  flex: 1; height: 36px; border: 1px solid var(--border-default); border-radius: 10px;
+  padding: 0 12px; font-family: var(--font); font-size: 12.5px; outline: none;
+  background: var(--surface-secondary); color: var(--text-primary);
+  transition: border-color var(--t-hover) ease, background var(--t-hover) ease;
+}
+.thread-compose input:focus { border-color: var(--brand-primary); background: var(--surface-primary); }
+
+/* ═══════════════ StatStrip + Table + Progress ═══════════════ */
+.statstrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; }
+.stat { background: var(--surface-secondary); border: 1px solid var(--border-default); border-radius: var(--card-radius); padding: 12px 14px; }
+.stat b { display: block; font-size: 20px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 10.5px; color: var(--text-tertiary); font-weight: 600; }
+.stat.rec b { color: var(--brand-primary); }
+@media (max-width: 480px) { .statstrip { grid-template-columns: 1fr 1fr; } .stat:last-child { grid-column: span 2; } }
+.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.tbl th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); font-weight: 700; padding: 9px 14px; border-bottom: 1px solid var(--border-default); background: var(--surface-secondary); }
+.tbl td { padding: 9px 14px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl td:first-child { font-weight: 600; color: var(--text-primary); }
+.tbl td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.pill { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 2px 8px; }
+.pill.good { color: var(--color-success); background: var(--status-success-surface-l1); }
+.pill.warn { color: var(--color-warning); background: var(--status-warning-surface-l1); }
+.pill.err { color: var(--color-destructive); background: var(--status-error-surface-l1); }
+.progress { display: flex; flex-direction: column; gap: 8px; padding: 14px; }
+.prog-step { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--text-secondary); }
+.prog-glyph { width: 20px; height: 20px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; margin-top: 1px; border: 2px solid var(--border-heavy); }
+.prog-glyph svg { width: 10px; height: 10px; }
+.prog-glyph.done { background: var(--color-success); border-color: var(--color-success); color: #fff; }
+.prog-glyph.run { border-color: var(--brand-primary); }
+.prog-glyph.run::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand-primary); animation: pulse 1.4s ease-in-out infinite; }
+.prog-glyph.todo { border-color: var(--border-default); }
+.prog-bar { height: 5px; border-radius: 4px; background: var(--surface-tertiary); overflow: hidden; margin: 4px 14px 12px; }
+.prog-fill { height: 100%; border-radius: 4px; background: var(--brand-primary); transition: width 400ms var(--ease-out); }
+
+/* ═══════════════ ui-resource (iframe channel) ═══════════════ */
+.uiframe { position: relative; aspect-ratio: 16/9; background: var(--surface-tertiary); }
+.uiframe .frame-inner {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--text-faint); font-size: 11.5px; gap: 8px;
+}
+.uiframe svg { width: 16px; height: 16px; }
+
+/* ═══════════════ Skeletons (match final layout shape) ═══════════════ */
+.skel-row { display: flex; gap: 12px; padding: 10px 14px; align-items: center; }
+.skel { border-radius: 8px; background: linear-gradient(90deg, var(--surface-tertiary) 25%, var(--surface-secondary) 45%, var(--surface-tertiary) 65%); background-size: 220% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { from { background-position: 130% 0; } to { background-position: -90% 0; } }
+.skel.av { width: 30px; height: 30px; border-radius: 9px; flex: none; }
+.skel.l1 { height: 11px; width: 55%; }
+.skel.l2 { height: 10px; width: 80%; margin-top: 6px; }
+
+/* ═══════════════ Toasts (undo pattern — ux §6.3) ═══════════════ */
+.toast-region { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.toast {
+  display: flex; align-items: center; gap: 14px;
+  background: color-mix(in srgb, var(--text-primary) 94%, transparent);
+  color: var(--surface-primary); font-size: 12.5px; font-weight: 550;
+  padding: 11px 16px; border-radius: 999px; box-shadow: var(--shadow-lg);
+  animation: toastin 260ms var(--ease-out);
+}
+[data-theme="dark"] .toast { background: color-mix(in srgb, var(--surface-secondary) 94%, transparent); color: var(--text-primary); border: 1px solid var(--border-default); }
+.toast.leaving { animation: toastout 150ms ease-in forwards; }
+@keyframes toastin { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+@keyframes toastout { to { opacity: 0; transform: translateY(10px) scale(0.97); } }
+.toast button { border: 0; background: transparent; color: var(--brand-primary); font-weight: 700; font-size: 12.5px; }
+[data-theme="dark"] .toast button { color: #A5B4FF; }
+.toast button:active { transform: scale(0.96); }
+
+/* ═══════════════ Anatomy diagrams ═══════════════ */
+.anatomy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 24px; }
+.anatomy-fig { background: var(--surface-primary); border: 1px solid var(--border-default); border-radius: var(--panel-radius); padding: 20px; }
+.anatomy-fig h4 { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+.anatomy-fig p { font-size: 11.5px; color: var(--text-tertiary); margin-bottom: 14px; }
+.anatomy-fig svg { width: 100%; height: auto; display: block; }
+
+/* motion spec table */
+.spec-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; background: var(--surface-primary); border: 1px solid var(--border-default); border-radius: var(--panel-radius); overflow: hidden; }
+.spec-tbl th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); font-weight: 700; padding: 10px 14px; border-bottom: 1px solid var(--border-default); background: var(--surface-secondary); }
+.spec-tbl td { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+.spec-tbl tr:last-child td { border-bottom: 0; }
+.spec-tbl code { font-family: var(--mono); font-size: 10.5px; background: var(--surface-tertiary); border-radius: 4px; padding: 1px 5px; }
+
+/* reduced motion — cross-fades only (apple §14) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 80ms !important; }
+  .stagger > *, .step.scr, .chipstep { opacity: 1 !important; transform: none !important; }
+  html { scroll-behavior: auto; }
+}
+/* touch devices: no hover-dependent affordances */
+@media (hover: none) {
+  .row:hover { background: transparent; }
+}
+.footnote { max-width: 1240px; margin: 0 auto; padding: 40px 28px 90px; font-size: 11.5px; color: var(--text-faint); line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>MCP Inline UI <span>— refined component system · v2</span></h1>
+  <span class="spacer"></span>
+  <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    <span id="themeLabel">Light</span>
+  </button>
+</header>
+
+<section class="hero">
+  <h2>Connector cards that feel native to the chat.</h2>
+  <p>One chrome, ten primitives, every connector. Refined against four lenses: Apple's fluid-interface motion (critically damped, interruptible, press-first), Emil's design-engineering details (easing curves, scale floors, blur crossfades), UX usability heuristics (four states, undo over confirm, 44px targets), and the DexLab token system (quiet surfaces, scarce brand color, both themes). Every component below is live — press, expand, send, undo.</p>
+  <div class="principles">
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>Press-first, 120ms</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Under 300ms, always</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M4 12l4-4M4 12l4 4"/></svg>Enter and exit the same path</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg>Tonal elevation, no shadow stacks</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Undo before confirm</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>44px targets on touch</span>
+  </div>
+</section>
+
+<!-- ═══════════════ 01 ListCard ═══════════════ -->
+<section class="section" id="listcard">
+  <div class="sec-head">
+    <h3>ListCard — the inbox surface</h3>
+    <p>Grouped rows, unread rail-dot on the left edge (not floating), tap to expand in place. Archive is instant with an undo toast — no confirm dialog. Staggered entry on first render only.</p>
+    <div class="usedby"><span class="u">gmail_list_emails</span><span class="u">gmail_search_emails</span><span class="u">gdrive_search_files</span><span class="u">slack_channel_history</span><span class="u">apple-apps_mail_list_messages</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <div class="msg-user"><div class="bubble">Check my inbox for anything from the Acme team.</div></div>
+        <p class="lead">Three messages from Acme — the pricing thread moved this morning.</p>
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-gmail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5L12 13l8.5-5.5"/></svg></span>
+            <span class="hd-name">Gmail</span>
+            <span class="tool-chip">gmail_list_emails</span>
+            <span class="hd-grow"></span>
+            <button class="icon-btn" aria-label="More actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+          </div>
+          <div class="stagger">
+            <div class="grp">Today</div>
+            <div class="row unread" data-expand>
+              <span class="avatar av-1">DL</span>
+              <div class="r-main">
+                <div class="r-top"><span class="r-from">Dana Lopez</span><span class="r-subject">Re: Pricing for the Q4 team plan</span></div>
+                <div class="r-snip">Good news — I can hold the 20% discount through Friday if you send the headcount this week.</div>
+              </div>
+              <div class="r-meta"><span class="r-time">10:42</span><span class="r-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.9 8.9 0 0 1-3.8-.8L3 20l1-5.2a8 8 0 0 1-.9-3.7A8.4 8.4 0 0 1 11.6 3a8.4 8.4 0 0 1 9.4 8.5z"/></svg></span></div>
+            </div>
+            <div class="rowbody-wrap" data-rowbody><div class="rowbody"><div class="rowbody-inner">
+              Good news — I can hold the 20% discount through Friday if you send the headcount this week. The team plan covers up to 25 seats, onboarding calls included.
+              <div class="rb-actions"><button class="act primary" data-archive>Archive</button><button class="act">Open in Gmail</button></div>
+            </div></div></div>
+            <div class="row unread">
+              <span class="avatar av-2">MA</span>
+              <div class="r-main">
+                <div class="r-top"><span class="r-from">Marcus Abel</span><span class="r-subject">Contract redlines — v3 attached</span></div>
+                <div class="r-snip">Legal flagged two clauses; everything else matches the call.</div>
+              </div>
+              <div class="r-meta"><span class="r-time">09:15</span><span class="r-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66L9.4 17.4a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span></div>
+            </div>
+            <div class="row">
+              <span class="avatar av-3">AB</span>
+              <div class="r-main">
+                <div class="r-top"><span class="r-from">Acme Billing</span><span class="r-subject">Invoice #4471 — paid</span></div>
+                <div class="r-snip">Payment of $1,240.00 received. No action needed.</div>
+              </div>
+              <div class="r-meta"><span class="r-time">08:03</span></div>
+            </div>
+          </div>
+          <div class="card-ft">
+            <button class="act">Load 9 more</button>
+            <span class="ft-note">5 of 12 · list ends here</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · 390 pt</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="msg-user"><div class="bubble">Check my inbox for anything from the Acme team.</div></div>
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-gmail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5L12 13l8.5-5.5"/></svg></span>
+            <span class="hd-name">Gmail</span>
+            <span class="hd-grow"></span>
+            <span class="hd-chip">12</span>
+          </div>
+          <div class="row unread" style="min-height:56px">
+            <span class="avatar av-1" style="width:36px;height:36px">DL</span>
+            <div class="r-main">
+              <div class="r-top" style="flex-direction:column;align-items:flex-start;gap:1px"><span class="r-from" style="font-size:14px">Dana Lopez</span><span class="r-subject" style="white-space:normal;font-size:13.5px">Re: Pricing for the Q4 team plan</span></div>
+              <div class="r-snip" style="font-size:12.5px;margin-top:3px">Good news — I can hold the 20% discount through Friday…</div>
+            </div>
+            <div class="r-meta"><span class="r-time">10:42</span></div>
+          </div>
+          <div class="row" style="min-height:56px">
+            <span class="avatar av-2" style="width:36px;height:36px">MA</span>
+            <div class="r-main">
+              <div class="r-top" style="flex-direction:column;align-items:flex-start;gap:1px"><span class="r-from" style="font-size:14px">Marcus Abel</span><span class="r-subject" style="white-space:normal;font-size:13.5px">Contract redlines — v3</span></div>
+              <div class="r-snip" style="font-size:12.5px;margin-top:3px">Legal flagged two clauses…</div>
+            </div>
+            <div class="r-meta"><span class="r-time">09:15</span></div>
+          </div>
+          <div class="skel-row"><span class="skel av"></span><span style="flex:1"><div class="skel l1"></div><div class="skel l2"></div></span></div>
+          <div class="card-ft"><button class="act" style="flex:1;min-height:44px">Load more</button></div>
+        </div>
+        <p style="margin-top:14px;font-size:11px;color:var(--text-faint);line-height:1.6">Rows are 56px here — above the 44px floor. Sender stacks above subject; time drops to the corner. Skeleton matches the row shape, not a spinner.</p>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 02 EditorCard ═══════════════ -->
+<section class="section" id="editorcard">
+  <div class="sec-head">
+    <h3>EditorCard — compose without leaving the chat</h3>
+    <p>The centerpiece. Chips for recipients, a sign-off selector that rewrites the closing line, attachment chips with upload rings. Send shows a processing state, then morphs to a receipt through a blur crossfade. Mobile moves actions to a translucent sticky bar — thumb-reachable, safe-area aware.</p>
+    <div class="usedby"><span class="u">gmail_draft_email</span><span class="u">gmail_reply_email</span><span class="u">apple-apps_mail_compose</span><span class="u">slack_send_message</span><span class="u">gcal_create_event</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <p class="lead">I've drafted the reply — edit anything below and send when ready.</p>
+        <div class="card" id="editorCard">
+          <div class="card-hd">
+            <span class="mark m-gmail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5L12 13l8.5-5.5"/></svg></span>
+            <span class="hd-name">Gmail</span>
+            <span class="tool-chip">gmail_draft_email</span>
+            <span class="hd-grow"></span>
+            <button class="icon-btn" aria-label="Discard draft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div id="editorBody">
+            <div class="fld fld-row">
+              <label>To</label>
+              <div class="fctl"><div class="chips" id="toChips">
+                <span class="chip"><span class="avatar av-1">DL</span>dana@acme.com<button class="chip-x" aria-label="Remove recipient"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button></span>
+                <span class="chip"><span class="avatar av-4">PT</span>priya@acme.com<button class="chip-x" aria-label="Remove recipient"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button></span>
+                <input class="chip-input" id="toInput" placeholder="add recipient…">
+              </div></div>
+              <button class="fld-ghost" id="ccToggle">Cc Bcc</button>
+            </div>
+            <div class="fld fld-row" id="ccRow" hidden>
+              <label>Cc</label>
+              <div class="fctl"><input class="chip-input" placeholder="add cc…"></div>
+            </div>
+            <div class="fld fld-row">
+              <label>Subject</label>
+              <div class="fctl"><input class="fld-input subject" id="subjInput" value="Re: Pricing for the Q4 team plan"></div>
+            </div>
+            <div class="fld fld-row">
+              <label>Body</label>
+              <div class="fctl"><textarea class="fld-input" id="bodyInput">Hi Dana,
+
+Great to hear the discount can be held. Our final headcount is 18 seats, billing entity: Dextop GmbH.
+
+Sending the signed order form through procurement today.</textarea></div>
+            </div>
+            <div class="fld fld-row">
+              <label>Sign-off</label>
+              <div class="fctl"><div class="signoff" id="signoffs">
+                <button class="so-chip on" data-so="Best, Marc">Best, Marc</button>
+                <button class="so-chip" data-so="Thanks! — Marc">Thanks! — Marc</button>
+                <button class="so-chip" data-so="Regards, Marc Adrian">Regards, Marc Adrian</button>
+              </div></div>
+            </div>
+            <div class="fld" style="border-bottom:0">
+              <label>Attachments</label>
+              <div class="atch-row" id="atchRow">
+                <span class="atch-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/></svg>order-form.pdf<b>182 KB</b></span>
+                <span class="atch-chip"><span class="ring"></span>seat-map.png<b>uploading</b></span>
+                <button class="atch-add" id="atchAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Attach</button>
+              </div>
+            </div>
+          </div>
+          <div class="editor-ft" id="editorFt">
+            <button class="act primary" id="sendBtn" style="min-width:96px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Send
+            </button>
+            <button class="act">Save draft</button>
+            <span class="autosave"><span class="tick"></span><span id="autosaveT">Draft saved · just now</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · sticky action bar</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="card">
+          <div class="card-hd"><span class="mark m-gmail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5L12 13l8.5-5.5"/></svg></span><span class="hd-name">Gmail</span><span class="hd-grow"></span><span class="tool-chip">draft</span></div>
+          <div class="fld" style="padding-top:12px"><label>To</label><div class="chips"><span class="chip"><span class="avatar av-1">DL</span>dana@acme.com</span><span class="chip"><span class="avatar av-4">PT</span>priya@</span></div></div>
+          <div class="fld"><label>Subject</label><input class="fld-input subject" value="Re: Pricing for the Q4 plan"></div>
+          <div class="fld" style="border-bottom:0"><label>Body</label><textarea class="fld-input" style="min-height:72px">Hi Dana, Great to hear the discount can be held. Final headcount: 18 seats.</textarea></div>
+        </div>
+        <div class="mobile-actionbar">
+          <button class="act primary" style="flex:1;min-height:44px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Send</button>
+          <button class="act" style="min-height:44px" aria-label="Attach file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66L9.4 17.4a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+          <button class="act" style="min-height:44px" aria-label="Save draft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
+        </div>
+        <p style="margin-top:14px;font-size:11px;color:var(--text-faint);line-height:1.6">Actions live in a translucent bar pinned above the keyboard zone; primary action fills the width. Icons carry aria-labels.</p>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 03 ConfirmCard ═══════════════ -->
+<section class="section" id="confirmcard">
+  <div class="sec-head">
+    <h3>ConfirmCard — only for the irreversible</h3>
+    <p>Model-initiated sends get a full-payload preview and an explicit confirm — the one place a dialog is honest, because email can't be un-sent everywhere. Destructive variant shifts the banner to the error ramp. Everything reversible uses the undo toast instead.</p>
+    <div class="usedby"><span class="u">gmail_send_email</span><span class="u">github_merge_pull_request</span><span class="u">stripe_create_refund</span><span class="u">gdrive_delete_file</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-gmail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5L12 13l8.5-5.5"/></svg></span>
+            <span class="hd-name">Gmail</span><span class="tool-chip">gmail_send_email</span><span class="hd-grow"></span>
+          </div>
+          <div class="c-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L2.5 20h19L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
+            <span><b>Dex wants to send this now</b> — review the full payload before confirming.</span>
+          </div>
+          <div class="pv">
+            <div class="fld fld-row"><label>To</label><div class="fctl chips"><span class="chip">dana@acme.com</span><span class="chip">priya@acme.com</span></div></div>
+            <div class="fld fld-row"><label>Subject</label><div class="fctl"><span style="font-size:13px;font-weight:650">Re: Pricing for the Q4 team plan</span></div></div>
+            <div class="fld" style="border-bottom:0"><label>Body</label><div class="pv-text">Hi Dana, Great to hear the discount can be held. Our final headcount is 18 seats, billing entity: Dextop GmbH. Sending the signed order form through procurement today — you should have it before Wednesday.</div></div>
+          </div>
+          <div class="card-ft" id="confirmFt">
+            <button class="act primary" id="confirmBtn" style="min-width:120px">Confirm send</button>
+            <button class="act" id="cancelBtn">Keep as draft</button>
+            <span class="ft-note">this action cannot be undone everywhere</span>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="c-banner destructive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+            <span><b>Dex wants to delete Contract-draft-v2.docx</b> — moved to Drive trash, retained 30 days.</span>
+          </div>
+          <div class="card-ft">
+            <button class="act danger">Delete file</button>
+            <button class="act">Cancel</button>
+            <span class="ft-note">recoverable from trash — undo appears after action too</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · 390 pt</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="card">
+          <div class="c-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px;height:14px"><path d="M12 3L2.5 20h19L12 3z"/><path d="M12 10v4M12 17h.01"/></svg><span><b>Send this now?</b></span></div>
+          <div class="pv"><div class="fld"><label>To</label><div style="font-size:12.5px">dana@acme.com, priya@acme.com</div></div>
+          <div class="fld" style="border-bottom:0"><label>Subject</label><div style="font-size:13px;font-weight:650">Re: Pricing for the Q4 team plan</div></div></div>
+          <div class="card-ft" style="gap:8px">
+            <button class="act primary" style="flex:1;min-height:44px">Confirm send</button>
+            <button class="act" style="min-height:44px">Cancel</button>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:11px;color:var(--text-faint);line-height:1.6">Buttons stack full-width at 44px; the payload preview truncates at three lines with an expand chevron.</p>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 04 ActivityStrip ═══════════════ -->
+<section class="section" id="activitystrip">
+  <div class="sec-head">
+    <h3>ActivityStrip — Computer Use as a film strip</h3>
+    <p>Screenshots run horizontally with the agent's reasoning as captions beneath each frame; actions compress to chips between frames. Scroll-snap for touch, momentum for trackpads. Press replay to watch entry stagger. The same strip serves Browser Hand with a globe mark.</p>
+    <div class="usedby"><span class="u">computer-use_screenshot</span><span class="u">computer-use_click</span><span class="u">browser-hand_navigate</span><span class="u">browser-hand_screenshot</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <p class="lead">I checked the pricing page and captured where the discount note appears.</p>
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-cu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+            <span class="hd-name">Computer Use</span>
+            <span class="tool-chip">4 steps</span>
+            <span class="hd-grow"></span>
+            <span class="running-dot" id="cuDot"></span>
+          </div>
+          <div class="strip-wrap">
+            <div class="strip" id="cuStrip">
+              <div class="step scr">
+                <div class="shot"><svg viewBox="0 0 200 120"><rect width="200" height="120" fill="#E8EEF9"/><rect x="0" y="0" width="200" height="16" fill="#DCE5F4"/><circle cx="10" cy="8" r="3" fill="#FF5F57"/><circle cx="19" cy="8" r="3" fill="#FEBC2E"/><circle cx="28" cy="8" r="3" fill="#28C840"/><rect x="10" y="24" width="52" height="88" rx="4" fill="#FFFFFF"/><rect x="16" y="32" width="40" height="5" rx="2.5" fill="#C7D2E8"/><rect x="16" y="43" width="34" height="5" rx="2.5" fill="#DCE5F4"/><rect x="16" y="54" width="40" height="5" rx="2.5" fill="#DCE5F4"/><rect x="70" y="26" width="120" height="44" rx="4" fill="#FFFFFF"/><rect x="78" y="34" width="70" height="7" rx="3.5" fill="#4B3FE3" opacity="0.85"/><rect x="78" y="47" width="104" height="5" rx="2.5" fill="#C7D2E8"/><rect x="78" y="57" width="88" height="5" rx="2.5" fill="#DCE5F4"/><rect x="70" y="76" width="120" height="30" rx="4" fill="#FFFFFF"/><rect x="78" y="84" width="50" height="12" rx="6" fill="#EDF1FA"/><circle cx="182" cy="106" r="7" fill="#4B3FE3"/><circle cx="182" cy="106" r="2.6" fill="#fff"/></svg></div>
+                <div class="step-cap"><b>Looking at the pricing page</b> to find the discount terms.</div>
+              </div>
+              <div class="chipstep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3.5v8M12.5 6.5v5M16 8v3.5"/><path d="M9 3.5a1.5 1.5 0 0 1 3 0V9m0 0a1.5 1.5 0 0 1 3 0v2m0 0a1.5 1.5 0 0 1 3 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L3 15.6c-.6-1 .2-2.3 1.4-2.1l2.1.4c.9.2 1.5-.2 1.5-1V5"/></svg>Click 342, 218</div>
+              <div class="step scr">
+                <div class="shot"><svg viewBox="0 0 200 120"><rect width="200" height="120" fill="#E8EEF9"/><rect x="0" y="0" width="200" height="16" fill="#DCE5F4"/><circle cx="10" cy="8" r="3" fill="#FF5F57"/><circle cx="19" cy="8" r="3" fill="#FEBC2E"/><circle cx="28" cy="8" r="3" fill="#28C840"/><rect x="12" y="26" width="176" height="30" rx="4" fill="#FFFFFF"/><rect x="20" y="33" width="60" height="7" rx="3.5" fill="#4B3FE3" opacity="0.7"/><rect x="20" y="45" width="140" height="4" rx="2" fill="#C7D2E8"/><rect x="12" y="62" width="176" height="26" rx="4" fill="#FFFFFF"/><rect x="20" y="68" width="30" height="14" rx="3" fill="#4B3FE3"/><rect x="56" y="71" width="70" height="4" rx="2" fill="#C7D2E8"/><rect x="12" y="94" width="176" height="18" rx="4" fill="#FFFFFF" opacity="0.7"/><circle cx="120" cy="72" r="8" fill="none" stroke="#F87454" stroke-width="2.4"/><circle cx="120" cy="72" r="2.4" fill="#F87454"/></svg></div>
+                <div class="step-cap"><b>Discount banner confirmed</b> — 20% holds through Friday.</div>
+              </div>
+              <div class="chipstep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M7 10h.01M11 10h.01M7 14h10"/></svg>Type "18 seats"</div>
+              <div class="step scr">
+                <div class="shot"><svg viewBox="0 0 200 120"><rect width="200" height="120" fill="#EDF3EC"/><rect x="0" y="0" width="200" height="16" fill="#DFEADF"/><circle cx="10" cy="8" r="3" fill="#FF5F57"/><circle cx="19" cy="8" r="3" fill="#FEBC2E"/><circle cx="28" cy="8" r="3" fill="#28C840"/><rect x="40" y="30" width="120" height="60" rx="6" fill="#FFFFFF"/><rect x="52" y="40" width="96" height="6" rx="3" fill="#C9D8C9"/><rect x="52" y="52" width="96" height="20" rx="4" fill="#F2F6F2"/><text x="58" y="66" font-family="Menlo,monospace" font-size="9" fill="#3E5A3E">18 seats confirmed</text><rect x="52" y="78" width="44" height="6" rx="3" fill="#DCE5DC"/><path d="M155 82l6 6 10-12" fill="none" stroke="#15A877" stroke-width="3" stroke-linecap="round"/></svg></div>
+                <div class="step-cap"><b>Form submitted</b> — confirmation shows 18 seats.</div>
+              </div>
+            </div>
+          </div>
+          <div class="strip-ft">
+            <button class="act" id="replayBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Replay entry</button>
+            <button class="act">Open full strip</button>
+            <span class="ft-note">scroll-snap · captions carry the reasoning</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · same strip</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="card">
+          <div class="card-hd"><span class="mark m-cu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#0F172A"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span><span class="hd-name">Computer Use</span><span class="hd-grow"></span><span class="hd-chip">4 steps</span></div>
+          <div class="strip-wrap"><div class="strip">
+            <div class="step" style="width:150px">
+              <div class="shot"><svg viewBox="0 0 200 120"><rect width="200" height="120" fill="#E8EEF9"/><rect x="0" width="200" height="16" fill="#DCE5F4"/><circle cx="10" cy="8" r="3" fill="#FF5F57"/><circle cx="19" cy="8" r="3" fill="#FEBC2E"/><circle cx="28" cy="8" r="3" fill="#28C840"/><rect x="70" y="26" width="120" height="44" rx="4" fill="#fff"/><rect x="78" y="34" width="70" height="7" rx="3.5" fill="#4B3FE3" opacity="0.85"/><rect x="78" y="47" width="104" height="5" rx="2.5" fill="#C7D2E8"/></svg></div>
+              <div class="step-cap" style="font-size:10px"><b>Pricing page</b> loaded.</div>
+            </div>
+            <div class="chipstep" style="font-size:9.5px;padding:5px 9px">Click 342,218</div>
+            <div class="step" style="width:150px">
+              <div class="shot"><svg viewBox="0 0 200 120"><rect width="200" height="120" fill="#EDF3EC"/><rect x="40" y="30" width="120" height="60" rx="6" fill="#fff"/><rect x="52" y="40" width="96" height="6" rx="3" fill="#C9D8C9"/><path d="M155 82l6 6 10-12" fill="none" stroke="#15A877" stroke-width="3" stroke-linecap="round"/></svg></div>
+              <div class="step-cap" style="font-size:10px"><b>Submitted</b> — 18 seats.</div>
+            </div>
+          </div></div>
+        </div>
+        <p style="margin-top:14px;font-size:11px;color:var(--text-faint);line-height:1.6">The strip is already the mobile pattern — horizontal, snap-aligned, thumb-width frames. Captions clamp to two lines.</p>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 05 Picker + Agenda ═══════════════ -->
+<section class="section" id="picker">
+  <div class="sec-head">
+    <h3>PickerCard — slots the agent computed</h3>
+    <p>Free-time slots as selectable chips with availability under each. Selection is instant and reversible; the primary action's label names the exact outcome. Agenda groups by day, dims the past, and flags conflicts with the warning ramp only.</p>
+    <div class="usedby"><span class="u">gcal_suggest_meeting_times</span><span class="u">gcal_list_events</span><span class="u">maps_directions</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-gcal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg></span>
+            <span class="hd-name">Calendar</span><span class="tool-chip">gcal_suggest_meeting_times</span>
+            <span class="hd-grow"></span><span class="hd-chip">3 attendees</span>
+          </div>
+          <div class="slotgrid" id="slots">
+            <button class="slot on"><b>Mon 10:00–10:30</b><span>all 3 free</span></button>
+            <button class="slot"><b>Mon 14:00–14:30</b><span>2 of 3 free</span></button>
+            <button class="slot"><b>Tue 09:30–10:00</b><span>all 3 free</span></button>
+            <button class="slot"><b>Tue 16:00–16:30</b><span>1 of 3 free</span></button>
+          </div>
+          <div class="card-ft"><button class="act primary" id="slotGo" style="min-width:200px">Create event · Mon 10:00</button><button class="act">More times</button></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="mark m-gcal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg></span><span class="hd-name">Calendar</span><span class="tool-chip">gcal_list_events</span><span class="hd-grow"></span><button class="icon-btn" aria-label="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button></div>
+          <div class="grp">Today — Sat, Sep 12</div>
+          <div class="row dim">
+            <span class="cal-time">09:00<br>09:30</span><span class="cal-bar" style="background:var(--text-faint)"></span>
+            <div class="r-main"><div class="r-top"><span class="r-subject" style="font-weight:600">Morning review</span><span class="r-chip">weekly</span></div></div>
+          </div>
+          <div class="row">
+            <span class="cal-time">11:30<br>12:00</span><span class="cal-bar" style="background:var(--brand-primary)"></span>
+            <div class="r-main"><div class="r-top"><span class="r-subject" style="font-weight:600">Acme — pricing sync</span><span class="r-chip">3 guests</span></div></div>
+            <span class="conflict" title="Conflicts with 11:45 dentist"></span>
+          </div>
+          <div class="grp">Tomorrow</div>
+          <div class="row">
+            <span class="cal-time">15:00<br>16:00</span><span class="cal-bar" style="background:var(--color-success)"></span>
+            <div class="r-main"><div class="r-top"><span class="r-subject" style="font-weight:600">Design review — connector cards</span></div></div>
+          </div>
+          <div class="card-ft"><span class="ft-note" style="margin-left:0">past events dim to 55% · conflicts use warning only</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · 390 pt</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="card">
+          <div class="card-hd"><span class="mark m-gcal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg></span><span class="hd-name">Calendar</span><span class="hd-grow"></span></div>
+          <div class="slotgrid" style="grid-template-columns:1fr 1fr;display:grid">
+            <button class="slot on"><b>Mon 10:00</b><span>all free</span></button>
+            <button class="slot"><b>Mon 14:00</b><span>2 of 3</span></button>
+            <button class="slot"><b>Tue 09:30</b><span>all free</span></button>
+            <button class="slot"><b>Tue 16:00</b><span>1 of 3</span></button>
+          </div>
+          <div class="card-ft"><button class="act primary" style="flex:1;min-height:44px">Create event · Mon 10:00</button></div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 06 Thread + Drive + Stats ═══════════════ -->
+<section class="section" id="thread">
+  <div class="sec-head">
+    <h3>ThreadCard, DriveListCard, StatStrip</h3>
+    <p>Thread rows keep author above text (mobile) with reactions as pressable chips; Drive rows use tinted type-glyph plates instead of solid brand blocks — platform colors sit on token-mixed plates so they hold in both themes. StatStrip numbers are tabular, and the recommended tile is the only brand-tinted one.</p>
+    <div class="usedby"><span class="u">slack_get_thread</span><span class="u">gdrive_search_files</span><span class="u">stripe_get_balance</span><span class="u">linear_list_projects</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-slack"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 15a2 2 0 1 1-2-2h2v2zm1 0a2 2 0 0 1 4 0v5a2 2 0 1 1-4 0v-5zm2-9a2 2 0 1 1 2-2v2H9zm0 1a2 2 0 0 1 0 4H4a2 2 0 1 1 0-4h5zm9 2a2 2 0 1 1 2 2h-2v-2zm-1 0a2 2 0 0 1-4 0V4a2 2 0 1 1 4 0v5zm-2 9a2 2 0 1 1-2 2v-2h2zm0-1a2 2 0 0 1 0-4h5a2 2 0 1 1 0 4h-5z"/></svg></span>
+            <span class="hd-name">Slack</span><span class="tool-chip">slack_get_thread</span><span class="hd-chip">#acme-deal</span><span class="hd-grow"></span>
+          </div>
+          <div class="bubble-row">
+            <span class="avatar av-1" style="width:28px;height:28px">DL</span>
+            <div style="min-width:0"><div class="b-name">Dana Lopez · 10:38</div><div class="bubble">Dana from Acme just confirmed the 20% discount holds through Friday if we send headcount. <b style="color:var(--brand-primary)">@Marc</b> can we lock 18 seats today?
+              <div class="reacts"><button class="react mine">+1 3</button><button class="react">fire 1</button></div></div></div>
+          </div>
+          <div class="bubble-row">
+            <span class="avatar av-6" style="width:28px;height:28px">MA</span>
+            <div style="min-width:0"><div class="b-name">Marcus Abel · 10:41</div><div class="bubble">Procurement has the order form — waiting on the entity name from legal.</div></div>
+          </div>
+          <div class="thread-compose">
+            <input id="replyInput" placeholder="Reply in thread…">
+            <button class="act primary" id="replySend" aria-label="Send reply"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <span class="mark m-gdrive"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.2 3.5h7.6L22 15.4l-3.8 6.6H5.8L2 15.4 8.2 3.5zm1.7 2.6L4.6 15.4l2.5 4.3h9.8l2.5-4.3-5.3-9.3H9.9z"/></svg></span>
+            <span class="hd-name">Drive</span><span class="tool-chip">gdrive_search_files</span><span class="hd-grow"></span>
+          </div>
+          <div class="row">
+            <span class="docglyph g-docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5zM9 13h6M9 17h6"/></svg></span>
+            <div class="r-main"><div class="r-top"><span class="r-subject" style="font-weight:600">Acme — Q4 partnership brief</span></div><div class="r-snip">Shared with 4 · edited 2h ago</div></div>
+            <div class="r-meta"><span class="ppl"><span class="avatar av-1">D</span><span class="avatar av-4">P</span></span></div>
+          </div>
+          <div class="row">
+            <span class="docglyph g-folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
+            <div class="r-main"><div class="r-top"><span class="r-subject" style="font-weight:600">Acme / Contracts</span></div><div class="r-snip">12 files · shared with 2</div></div>
+            <div class="r-meta"><span class="r-time">Open</span></div>
+          </div>
+          <div class="card-ft"><button class="act link">Open in Drive</button><span class="ft-note">type glyphs on token-mixed plates</span></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="mark m-dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg></span><span class="hd-name">Sprint status</span><span class="tool-chip">linear_list_projects</span><span class="hd-grow"></span></div>
+          <div class="statstrip">
+            <div class="stat rec"><b>18</b><span>closed this cycle</span></div>
+            <div class="stat"><b>6</b><span>in review</span></div>
+            <div class="stat"><b>+24%</b><span>velocity vs last</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · 390 pt</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="card">
+          <div class="card-hd"><span class="mark m-slack"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 15a2 2 0 1 1-2-2h2v2zm1 0a2 2 0 0 1 4 0v5a2 2 0 1 1-4 0v-5zm2-9a2 2 0 1 1 2-2v2H9zm0 1a2 2 0 0 1 0 4H4a2 2 0 1 1 0-4h5zm9 2a2 2 0 1 1 2 2h-2v-2zm-1 0a2 2 0 0 1-4 0V4a2 2 0 1 1 4 0v5zm-2 9a2 2 0 1 1-2 2v-2h2zm0-1a2 2 0 0 1 0-4h5a2 2 0 1 1 0 4h-5z"/></svg></span><span class="hd-name">#acme-deal</span><span class="hd-grow"></span></div>
+          <div class="bubble-row" style="flex-direction:column;gap:6px">
+            <div style="display:flex;gap:8px;align-items:center"><span class="avatar av-1" style="width:22px;height:22px;font-size:8px">DL</span><span class="b-name" style="margin:0">Dana · 10:38</span></div>
+            <div class="bubble" style="max-width:100%">Discount holds through Friday if we send headcount. Can we lock 18 seats today?
+            <div class="reacts"><button class="react mine" style="min-height:26px">+1 3</button></div></div>
+          </div>
+          <div class="thread-compose"><input placeholder="Reply…"><button class="act primary" style="min-height:36px" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="statstrip">
+            <div class="stat rec"><b>18</b><span>closed</span></div>
+            <div class="stat"><b>6</b><span>in review</span></div>
+            <div class="stat" style="grid-column:span 2"><b>+24%</b><span>velocity vs last cycle</span></div>
+          </div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 07 Progress + ui-resource ═══════════════ -->
+<section class="section" id="progress">
+  <div class="sec-head">
+    <h3>ProgressCard and the ui-resource channel</h3>
+    <p>Batch operations run as step glyphs with a live bar; the running glyph pulses, done glyphs check in. The ui-resource card is the MCP Apps escape hatch — server-authored HTML in a sandboxed iframe wrapped in our chrome, so even third-party apps land consistently.</p>
+    <div class="usedby"><span class="u">gdrive_upload_file</span><span class="u">zapier_trigger_run</span><span class="u">ui:// SEP-1865 servers</span></div>
+  </div>
+  <div class="frames">
+    <div class="frame-desktop">
+      <div class="frame-label">Desktop · chat column 720</div>
+      <div class="chatcol">
+        <div class="card">
+          <div class="card-hd"><span class="mark m-gdrive"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.2 3.5h7.6L22 15.4l-3.8 6.6H5.8L2 15.4 8.2 3.5z"/></svg></span><span class="hd-name">Drive</span><span class="tool-chip">gdrive_upload_file</span><span class="hd-grow"></span><span class="hd-chip">3 of 5</span></div>
+          <div class="progress">
+            <div class="prog-step"><span class="prog-glyph done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M4 12.5l5 5L20 6.5"/></svg></span>order-form.pdf — 182 KB</div>
+            <div class="prog-step"><span class="prog-glyph done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M4 12.5l5 5L20 6.5"/></svg></span>seat-map.png — 2.1 MB</div>
+            <div class="prog-step"><span class="prog-glyph run"></span>pricing-scenarios.pdf — uploading</div>
+            <div class="prog-step"><span class="prog-glyph todo"></span>threads-export.md</div>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:45%"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="mark m-dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg></span><span class="hd-name">Acme Charts</span><span class="tool-chip">ui://acme/chart-abc</span><span class="hd-grow"></span><span class="hd-chip">MCP App</span></div>
+          <div class="uiframe">
+            <div class="frame-inner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 20V9"/></svg>
+              sandboxed iframe · allow-scripts · CSP from _meta.ui
+            </div>
+          </div>
+          <div class="card-ft"><button class="act">Open standalone</button><span class="ft-note">server-authored UI, host chrome</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="frame-label">Mobile · 390 pt</div>
+      <div class="phone"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-pad">
+        <div class="card">
+          <div class="card-hd"><span class="mark m-gdrive"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.2 3.5h7.6L22 15.4l-3.8 6.6H5.8L2 15.4 8.2 3.5z"/></svg></span><span class="hd-name">Drive</span><span class="hd-grow"></span><span class="hd-chip">3 of 5</span></div>
+          <div class="progress" style="font-size:12px">
+            <div class="prog-step"><span class="prog-glyph done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" style="width:9px;height:9px"><path d="M4 12.5l5 5L20 6.5"/></svg></span>order-form.pdf</div>
+            <div class="prog-step"><span class="prog-glyph run"></span>pricing-scenarios.pdf</div>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:45%"></div></div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 08 Anatomy ═══════════════ -->
+<section class="section" id="anatomy">
+  <div class="sec-head">
+    <h3>Anatomy — the numbers behind the feel</h3>
+    <p>Two annotated diagrams at true proportions: the measurement grid every primitive shares, and the mobile editor's sticky-bar geometry. All values are 4-point-grid multiples from the token sheet.</p>
+  </div>
+  <div class="anatomy-grid">
+    <div class="anatomy-fig">
+      <h4>ListCard anatomy</h4>
+      <p>Row height, rail-dot position, chrome stack, and the expand affordance.</p>
+      <svg viewBox="0 0 560 300" font-family="Inter,sans-serif">
+        <!-- card -->
+        <rect x="60" y="30" width="300" height="240" rx="12" fill="none" stroke="#4B3FE3" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.5"/>
+        <rect x="60" y="30" width="300" height="34" rx="12" fill="#4B3FE3" opacity="0.10"/>
+        <rect x="60" y="52" width="300" height="12" fill="#4B3FE3" opacity="0.10"/>
+        <line x1="60" y1="64" x2="360" y2="64" stroke="#4B3FE3" stroke-width="1" opacity="0.4"/>
+        <circle cx="78" cy="47" r="7" fill="#4B3FE3" opacity="0.7"/>
+        <rect x="92" y="43" width="46" height="8" rx="4" fill="#94A3B8" opacity="0.5"/>
+        <rect x="146" y="43" width="60" height="8" rx="4" fill="#94A3B8" opacity="0.3"/>
+        <!-- row 1 -->
+        <circle cx="88" cy="106" r="13" fill="#4B3FE3" opacity="0.75"/>
+        <rect x="110" y="96" width="130" height="9" rx="4.5" fill="#334155" opacity="0.8"/>
+        <rect x="110" y="111" width="180" height="7" rx="3.5" fill="#94A3B8" opacity="0.5"/>
+        <rect x="322" y="98" width="26" height="6" rx="3" fill="#94A3B8" opacity="0.45"/>
+        <!-- row divider -->
+        <line x1="60" y1="134" x2="360" y2="134" stroke="#E2E8F0" stroke-width="1"/>
+        <!-- row 2 -->
+        <circle cx="88" cy="166" r="13" fill="#15A877" opacity="0.75"/>
+        <rect x="110" y="156" width="110" height="9" rx="4.5" fill="#334155" opacity="0.8"/>
+        <rect x="110" y="171" width="160" height="7" rx="3.5" fill="#94A3B8" opacity="0.5"/>
+        <!-- unread rail dot -->
+        <circle cx="66" cy="106" r="2.5" fill="#4B3FE3"/>
+        <!-- measures -->
+        <g stroke="#4B3FE3" stroke-width="1" fill="none">
+          <line x1="384" y1="30" x2="384" y2="64"/><line x1="378" y1="30" x2="390" y2="30"/><line x1="378" y1="64" x2="390" y2="64"/>
+          <line x1="384" y1="88" x2="384" y2="126"/><line x1="378" y1="88" x2="390" y2="88"/><line x1="378" y1="126" x2="390" y2="126"/>
+          <line x1="60" y1="244" x2="360" y2="244"/><line x1="60" y1="252" x2="60" y2="236"/><line x1="360" y1="252" x2="360" y2="236"/>
+        </g>
+        <g font-size="10" fill="#4B3FE3" font-weight="600">
+          <text x="396" y="51">40 header</text>
+          <text x="396" y="111">48 row min</text>
+          <text x="396" y="252" opacity="0">.</text>
+          <text x="180" y="262">radius 12 · border 1px at 12% alpha</text>
+        </g>
+        <g font-size="9.5" fill="#64748B">
+          <text x="66" y="286">rail dot 4px · left inset 6 · gap 12 · avatar 30 · padding 14 · divider 6% alpha</text>
+        </g>
+      </svg>
+    </div>
+    <div class="anatomy-fig">
+      <h4>Mobile editor — sticky action bar</h4>
+      <p>Thumb-zone geometry: bar floats on blur material, primary action fills, safe-area respected.</p>
+      <svg viewBox="0 0 560 300" font-family="Inter,sans-serif">
+        <rect x="160" y="10" width="240" height="280" rx="28" fill="#0F172A" opacity="0.92"/>
+        <rect x="170" y="20" width="220" height="260" rx="20" fill="#F0F6FF"/>
+        <rect x="180" y="34" width="200" height="180" rx="10" fill="#FFFFFF" stroke="rgba(59,130,246,0.12)"/>
+        <rect x="190" y="46" width="90" height="8" rx="4" fill="#94A3B8" opacity="0.4"/>
+        <rect x="190" y="62" width="160" height="6" rx="3" fill="#CBD5E1" opacity="0.6"/>
+        <rect x="190" y="76" width="140" height="6" rx="3" fill="#CBD5E1" opacity="0.5"/>
+        <rect x="180" y="222" width="200" height="48" rx="0" fill="#FFFFFF" opacity="0.72"/>
+        <rect x="180" y="222" width="200" height="1" fill="#4B3FE3" opacity="0.15"/>
+        <rect x="190" y="232" width="120" height="28" rx="8" fill="#4B3FE3"/>
+        <text x="250" y="250" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">Send</text>
+        <circle cx="330" cy="246" r="14" fill="#fff" stroke="rgba(59,130,246,0.28)"/>
+        <path d="M325 246h10M330 241v10" stroke="#334155" stroke-width="1.6"/>
+        <rect x="180" y="270" width="200" height="10" fill="#0F172A" opacity="0.06"/>
+        <text x="258" y="279" font-size="7.5" fill="#64748B" text-anchor="middle">home indicator · safe-area pad 10 + env()</text>
+        <g stroke="#4B3FE3" stroke-width="1" fill="none">
+          <line x1="412" y1="222" x2="412" y2="270"/><line x1="406" y1="222" x2="418" y2="222"/><line x1="406" y1="270" x2="418" y2="270"/>
+          <line x1="190" y1="212" x2="310" y2="212" stroke-dasharray="3 3"/>
+        </g>
+        <g font-size="10" fill="#4B3FE3" font-weight="600">
+          <text x="424" y="242">48 bar +</text>
+          <text x="424" y="254">safe-area</text>
+        </g>
+        <g font-size="9.5" fill="#64748B">
+          <text x="190" y="212" opacity="0">.</text>
+          <text x="60" y="205" text-anchor="end">blur(20) saturate(160%)</text>
+          <text x="60" y="219" text-anchor="end">72% surface alpha</text>
+          <text x="60" y="253" text-anchor="end">primary fills,</text>
+          <text x="60" y="265" text-anchor="end">44px min height</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 09 Motion spec ═══════════════ -->
+<section class="section" id="motion">
+  <div class="sec-head">
+    <h3>Motion spec — every animation has a job</h3>
+    <p>Frequency-gated per the decision framework: high-frequency actions (row press, chip toggle) get near-zero motion; rare moments (receipt, certificate) earn the most. All values below are the actual CSS in this page.</p>
+  </div>
+  <table class="spec-tbl">
+    <tr><th>Interaction</th><th>Frequency</th><th>Duration</th><th>Easing / curve</th><th>Properties</th></tr>
+    <tr><td>Press feedback (all pressables)</td><td>100+/day</td><td><code>120ms</code></td><td><code>ease-out</code></td><td>transform: scale(0.97)</td></tr>
+    <tr><td>Hover surfaces</td><td>tens/day</td><td><code>120ms</code></td><td><code>ease</code></td><td>background only</td></tr>
+    <tr><td>Row expand / card collapse</td><td>occasional</td><td><code>260ms</code></td><td><code>cubic-bezier(0.23,1,0.32,1)</code></td><td>grid-template-rows + opacity (60ms delay)</td></tr>
+    <tr><td>List entry stagger</td><td>first render</td><td><code>340ms</code>, 40ms steps</td><td><code>ease-out</code></td><td>opacity + translateY(6px)</td></tr>
+    <tr><td>Receipt morph (send)</td><td>rare</td><td><code>240ms</code></td><td><code>ease-out</code></td><td>scale(0.95)→1 + opacity + blur(2px)→0</td></tr>
+    <tr><td>Toast enter / exit</td><td>occasional</td><td><code>260ms / 150ms</code></td><td>exit faster than enter</td><td>translateY + scale + opacity, same path</td></tr>
+    <tr><td>Carousel track</td><td>occasional</td><td><code>320ms</code></td><td><code>cubic-bezier(0.77,0,0.175,1)</code></td><td>transform: translateX, scroll-snap on touch</td></tr>
+    <tr><td>Theme change</td><td>rare</td><td><code>150ms</code></td><td><code>ease</code></td><td>background/color — never abrupt</td></tr>
+    <tr><td>Skeleton shimmer</td><td>loading</td><td><code>1.4s loop</code></td><td><code>linear</code></td><td>background-position; shape matches layout</td></tr>
+    <tr><td>Running glyph pulse</td><td>while active</td><td><code>1.4–1.6s loop</code></td><td><code>ease-in-out</code></td><td>opacity 1→0.35</td></tr>
+  </table>
+  <div class="principles" style="margin-top:20px">
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg>transform + opacity only</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>No scale below 0.94, above 1.05</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 14-5M20 12a8 8 0 0 1-14 5"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Interruptible — transitions, not keyframes</span>
+    <span class="principle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>Reduced motion = cross-fades</span>
+  </div>
+</section>
+
+<div class="footnote">
+  Refined against: Apple <em>Designing Fluid Interfaces</em> (spring discipline, press-first, spatial consistency) · Emil Kowalski's design-engineering practice (easing curves, duration ceilings, blur crossfades, stagger) · UX usability heuristics (four states, undo-toasts, touch targets, progressive disclosure) · DexLab design system (tokens, scarce brand, quiet surfaces, ds-* discipline). Deviations from gpt-taste defaults (font choice, marketing motion) are deliberate: this is a product UI surface where token fidelity and motion restraint outrank landing-page drama.
+</div>
+
+<div class="toast-region" id="toastRegion"></div>
+
+<script>
+// ── theme toggle: eased color transition, label swap (apple §14) ──
+const root = document.documentElement;
+const themeLabel = document.getElementById('themeLabel');
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+  root.dataset.theme = next;
+  themeLabel.textContent = next === 'light' ? 'Light' : 'Dark';
+});
+
+// ── toast (undo pattern): enter bottom, exit faster, same path ──
+const region = document.getElementById('toastRegion');
+let toastTimer;
+function toast(msg, actionLabel, onAction) {
+  region.innerHTML = '';
+  const t = document.createElement('div');
+  t.className = 'toast';
+  const s = document.createElement('span'); s.textContent = msg; t.appendChild(s);
+  if (actionLabel) {
+    const b = document.createElement('button'); b.textContent = actionLabel;
+    b.addEventListener('click', () => { onAction?.(); dismiss(); });
+    t.appendChild(b);
+  }
+  region.appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(dismiss, 5000);
+  function dismiss() {
+    t.classList.add('leaving');
+    setTimeout(() => t.remove(), 160);
+  }
+}
+
+// ── ListCard: expand in place + archive-with-undo ──
+document.querySelectorAll('[data-expand]').forEach(row => {
+  row.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    const body = row.nextElementSibling;
+    if (!body || !body.hasAttribute('data-rowbody')) return;
+    const open = body.classList.toggle('open');
+    row.setAttribute('aria-expanded', open);
+  });
+});
+document.querySelectorAll('[data-archive]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const body = btn.closest('.rowbody-wrap');
+    const row = body.previousElementSibling;
+    row.classList.add('removing');
+    body.classList.remove('open');
+    toast('Message archived', 'Undo', () => row.classList.remove('removing'));
+  });
+});
+
+// ── EditorCard: chips, cc, sign-off (blur crossfade), attachments, autosave, send ──
+const autoT = document.getElementById('autosaveT');
+let autoTimer;
+function pulseSave() {
+  autoT.textContent = 'Saving…';
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => { autoT.textContent = 'Draft saved · just now'; }, 700);
+}
+document.querySelectorAll('#toChips .chip-x').forEach(x =>
+  x.addEventListener('click', (e) => { e.target.closest('.chip').remove(); pulseSave(); }));
+document.getElementById('toInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="avatar" style="background:var(--text-tertiary)">+</span>`;
+    chip.append(e.target.value.trim());
+    const x = document.createElement('button'); x.className = 'chip-x'; x.setAttribute('aria-label','Remove');
+    x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+    x.addEventListener('click', () => { chip.remove(); pulseSave(); });
+    chip.appendChild(x);
+    document.getElementById('toInput').before(chip);
+    e.target.value = ''; pulseSave();
+  }
+});
+document.getElementById('ccToggle').addEventListener('click', () => {
+  const row = document.getElementById('ccRow');
+  row.hidden = !row.hidden;
+});
+document.getElementById('subjInput').addEventListener('input', pulseSave);
+document.getElementById('bodyInput').addEventListener('input', pulseSave);
+document.getElementById('signoffs').addEventListener('click', (e) => {
+  const b = e.target.closest('.so-chip'); if (!b) return;
+  document.querySelectorAll('.so-chip').forEach(x => x.classList.toggle('on', x === b));
+  const ta = document.getElementById('bodyInput');
+  const content = ta.value.replace(/\n(Best, Marc|Thanks! — Marc|Regards, Marc Adrian)\s*$/, '');
+  ta.value = content.replace(/\s*$/, '') + '\n\n' + b.dataset.so;
+  pulseSave();
+});
+const files = ['headcount-sept.csv', 'pricing-notes.md'];
+let fi = 0;
+document.getElementById('atchAdd').addEventListener('click', () => {
+  if (fi >= files.length) return;
+  const chip = document.createElement('span');
+  chip.className = 'atch-chip';
+  chip.innerHTML = '<span class="ring"></span>' + files[fi++] + '<b>uploading</b>';
+  document.getElementById('atchAdd').before(chip);
+  setTimeout(() => {
+    chip.querySelector('.ring').outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:var(--color-success)"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+    chip.querySelector('b').textContent = 'ready';
+  }, 1300);
+});
+const sendBtn = document.getElementById('sendBtn');
+sendBtn.addEventListener('click', () => {
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner"></span>Sending';
+  setTimeout(() => {
+    const n = document.querySelectorAll('#toChips .chip').length || 2;
+    document.getElementById('editorBody').outerHTML =
+      `<div class="receipt" id="editorBody">
+        <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+        <div><div class="t1">Sent to ${n} recipients</div><div class="t2">Re: Pricing for the Q4 team plan · just now</div></div>
+        <button class="act" id="undoSend">Undo</button>
+      </div>`;
+    const ft = document.getElementById('editorFt');
+    ft.innerHTML = '<span class="ft-note" style="margin:0 auto">user-initiated from the card · undo window 5s</span>';
+    toast('Email sent', 'Undo', () => location.reload());
+  }, 850);
+});
+
+// ── ConfirmCard ──
+const confirmBtn = document.getElementById('confirmBtn');
+confirmBtn.addEventListener('click', () => {
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<span class="spinner"></span>Sending';
+  setTimeout(() => {
+    document.querySelector('#confirmFt').closest('.card').querySelector('.pv').outerHTML =
+      `<div class="receipt"><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+       <div><div class="t1">Sent to 2 recipients</div><div class="t2">confirmed by user · receipt in message</div></div></div>`;
+    document.getElementById('confirmFt').innerHTML = '<span class="ft-note" style="margin:0 auto">done</span>';
+  }, 900);
+});
+document.getElementById('cancelBtn')?.addEventListener('click', () => {
+  document.getElementById('confirmFt').innerHTML = '<span class="ft-note" style="margin:0 auto">kept as draft — nothing sent</span>';
+});
+
+// ── Slot picker ──
+document.getElementById('slots').addEventListener('click', (e) => {
+  const s = e.target.closest('.slot'); if (!s) return;
+  document.querySelectorAll('#slots .slot').forEach(x => x.classList.toggle('on', x === s));
+  document.getElementById('slotGo').textContent = 'Create event · ' + s.querySelector('b').textContent.split('–')[0].trim();
+});
+document.getElementById('slotGo')?.addEventListener('click', function () {
+  this.outerHTML = '<button class="act" disabled>Created — editor prefilled</button>';
+});
+
+// ── ActivityStrip replay (stagger entry) ──
+document.getElementById('replayBtn').addEventListener('click', () => {
+  const strip = document.getElementById('cuStrip');
+  const items = [...strip.children];
+  items.forEach(el => { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; });
+});
+
+// ── Thread reply ──
+document.getElementById('replySend')?.addEventListener('click', () => {
+  const inp = document.getElementById('replyInput');
+  if (!inp.value.trim()) return;
+  const row = document.createElement('div');
+  row.className = 'bubble-row';
+  row.style.animation = 'rise 300ms cubic-bezier(0.23,1,0.32,1)';
+  row.innerHTML = '<span class="avatar av-6" style="width:28px;height:28px;background:var(--brand-primary)">You</span><div style="min-width:0"><div class="b-name">You · just now</div><div class="bubble me"></div></div>';
+  row.querySelector('.bubble').textContent = inp.value;
+  inp.closest('.thread-compose').before(row);
+  inp.value = '';
+});
+</script>
+</body>
+</html>
