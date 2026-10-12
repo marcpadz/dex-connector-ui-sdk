@@ -110,3 +110,42 @@ The extraction logic is ported from Dextop's
 `parts-v2/activity-grouping.ts` (pure functions only; React cards stay in the
 host repo). Design context: Dextop's
 `docs/plans/2026-09-06-mcp-inline-ui-handover.md`.
+
+---
+
+## Bring dex-connector-ui-sdk to your app
+
+The five responsibilities of a host, in integration order:
+
+1. **Adapt your tool-call Part.** Anything shaped like `ToolPartLike` works —
+   `{ tool, state: { status, input, output?, metadata?, title? } }`. `title`
+   may be `null`. One small adapter function is enough for most runtimes.
+2. **Extract.** `extractToolMedia(part)` returns a descriptor or `null`
+   (null = show your running/empty state). Pass
+   `extractToolMedia(part, customExtractors, { trace: [] })` during
+   development to capture the dispatch decision chain — the trace names which
+   layer matched (host override → family envelope → builtin → server table →
+   ui-resource → mcp-result → json) and is what you want in your devtools
+   when a connector renders as raw JSON.
+3. **Render.** Map each `ToolMedia.kind` onto your component vocabulary. The
+   primitive kinds (`list-card`, `detail-card`, `confirm-card`, `editor-card`,
+   `table-card`, `stat-strip`) are deliberately shape-minimal so one card set
+   covers every connector. Generic kinds (`mcp-result`, `json`) are your
+   fallback — never throw, never blank.
+4. **Gate writes.** `editor-card` descriptors are drafts; the primary action
+   fires *from your app* when the user presses it — never automatically, and
+   never on the model's behalf. `confirm-card` is the preview face for
+   model-initiated writes: render actions, require explicit user confirmation
+   before invoking the underlying tool.
+5. **Sandbox the foreign channel.** `ui-resource` descriptors carry
+   server-authored HTML: render in an iframe with
+   `sandbox="allow-scripts"` (never `allow-same-origin`) and apply
+   `media.csp` directives in-document. For follow-up interaction, accept
+   `window.postMessage` from that frame **only** after
+   `parseUiResourceHostMessage(event.data)` validates it and
+   `event.source === yourFrame.contentWindow` — see the validator's tests
+   for the trust-boundary rationale.
+
+Rendering reference: the Dextop host implementation
+(`frontend/src/components/parts-v2/tool-media-cards.tsx` in the Dextop repo)
+and the design-spec mockup cover typography, states, and motion.
