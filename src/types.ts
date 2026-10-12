@@ -386,6 +386,11 @@ export type UiResourceHostMessage =
  * Frames have opaque origins (no allow-same-origin), so shape validation +
  * host-side source-window checks are the only trust boundary. Returns null
  * for anything that is not exactly a supported message.
+ *
+ * Host responsibilities when handling a validated message: for `open-link`,
+ * open through your external-browser pathway (https/http already enforced
+ * here); for `ui-message`, route into your composer — and when logging or
+ * echoing failures, redact any credentials before they reach CI logs.
  */
 export function parseUiResourceHostMessage(data: unknown): UiResourceHostMessage | null {
   if (data === null || typeof data !== "object") return null;
