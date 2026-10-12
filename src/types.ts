@@ -371,3 +371,41 @@ export interface TrackerEnvelopeMedia {
     column?: string;
   }>;
 }
+
+// ─── ui-resource host bridge (v0.2.1) ───
+// Validated message shapes a sandboxed ui-resource iframe may post to the
+// host (window.postMessage). The host MUST run every incoming event through
+// parseUiResourceHostMessage and drop anything that fails validation.
+
+export type UiResourceHostMessage =
+  | { type: "ui-message"; text: string }
+  | { type: "open-link"; url: string };
+
+/**
+ * Strictly validate a posted message from a ui-resource sandbox frame.
+ * Frames have opaque origins (no allow-same-origin), so shape validation +
+ * host-side source-window checks are the only trust boundary. Returns null
+ * for anything that is not exactly a supported message.
+ */
+export function parseUiResourceHostMessage(data: unknown): UiResourceHostMessage | null {
+  if (data === null || typeof data !== "object") return null;
+  const msg = data as Record<string, unknown>;
+  if (msg.type === "ui-message") {
+    if (typeof msg.text !== "string") return null;
+    const text = msg.text.trim();
+    if (!text || text.length > 10_000) return null;
+    return { type: "ui-message", text };
+  }
+  if (msg.type === "open-link") {
+    if (typeof msg.url !== "string") return null;
+    let parsed: URL;
+    try {
+      parsed = new URL(msg.url);
+    } catch {
+      return null;
+    }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    return { type: "open-link", url: parsed.toString() };
+  }
+  return null;
+}

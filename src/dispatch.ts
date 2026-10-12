@@ -187,20 +187,33 @@ function tryEnvelopes(part: ToolPartLike): ToolMedia | null {
 export function extractToolMedia(
   part: ToolPartLike,
   customExtractors?: Record<string, Extractor>,
+  opts?: { trace?: string[] },
 ): ToolMedia | null {
+  const trace = opts?.trace;
   if (customExtractors) {
     const custom = customExtractors[part.tool];
     if (custom) {
       const hit = custom(part);
-      if (hit) return hit;
+      if (hit) {
+        trace?.push(`host override: ${part.tool} -> ${hit.kind}`);
+        return hit;
+      }
+      trace?.push(`host override miss: ${part.tool}`);
     }
   }
 
   const enveloped = tryEnvelopes(part);
-  if (enveloped) return enveloped;
+  if (enveloped) {
+    trace?.push(`family envelope -> ${enveloped.kind}`);
+    return enveloped;
+  }
 
   const builtin = BUILTIN_EXTRACTORS[part.tool];
-  if (builtin) return builtin(part);
+  if (builtin) {
+    const hit = builtin(part);
+    trace?.push(`builtin ${part.tool} -> ${hit?.kind ?? "null"}`);
+    return hit;
+  }
 
   // Server-prefixed id ({server}_{tool}) → try the server's extractor table.
   // A table hit that returns null falls through (the shape didn't match the
@@ -214,7 +227,11 @@ export function extractToolMedia(
       const hit = serverTable[rawTool];
       if (hit) {
         const result = hit(part);
-        if (result) return result;
+        if (result) {
+          trace?.push(`server ${server}.${rawTool} -> ${result.kind}`);
+          return result;
+        }
+        trace?.push(`server ${server}.${rawTool}: shape miss, falling through`);
       }
     }
   }
@@ -223,7 +240,17 @@ export function extractToolMedia(
   // sandboxed iframe (server-authored UI) — checked before the generic
   // envelope so an Apps-enabled server's tool wins over mcp-result JSON.
   const ui = fromUiResource(part);
-  if (ui) return ui;
+  if (ui) {
+    trace?.push("mcp apps ui-resource -> ui-resource");
+    return ui;
+  }
 
-  return fromMcp(part) ?? fromJsonFallback(part);
+  const mcp = fromMcp(part);
+  if (mcp) {
+    trace?.push(`mcp-result envelope -> mcp-result (${mcp.server})`);
+    return mcp;
+  }
+  const json = fromJsonFallback(part);
+  trace?.push(json ? "json fallback" : "no renderable payload");
+  return json;
 }
