@@ -117,3 +117,19 @@ describe("fromActivityBlock", () => {
     expect(fromActivityBlock([reasoning("just thinking")])).toBeNull();
   });
 });
+describe("groupActivityBlocks — transparent non-family tools", () => {
+  it("webfetch between browser calls keeps one run (live-session regression)", () => {
+    const blocks = groupActivityBlocks([
+      reasoning("open it"),
+      tool("browser-hand_navigate"),
+      tool("webfetch"),
+      tool("browser-hand_snapshot"),
+      tool("webfetch"),
+      tool("browser-hand_evaluate"),
+    ]);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].family).toBe("browser");
+    // Transparent webfetch parts are not consumed into the block.
+    expect(blocks[0].parts.every((p) => p.type !== "tool" || String((p as { tool: string }).tool).startsWith("browser-hand"))).toBe(true);
+  });
+});

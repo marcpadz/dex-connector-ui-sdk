@@ -1,6 +1,6 @@
 {
   "name": "dex-connector-ui-sdk",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Harness-agnostic agent capability SDK: turn raw tool-call results (builtin tools + MCP connectors) into structured UI descriptors. Pure data \u2014 the host renders.",
   "type": "module",
   "main": "./dist/index.js",
