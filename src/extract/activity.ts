@@ -264,12 +264,25 @@ export function groupActivityBlocks(parts: ActivityPartLike[]): ActivityBlock[] 
       currentFamily = fam;
       continue;
     }
-    flush();
-    if (fam !== null) {
+    // Different family mid-run — flush and start a fresh run.
+    if (fam !== null && currentFamily !== null) {
+      flush();
       current.push(p);
       hasTool = true;
       currentFamily = fam;
+      continue;
     }
+    // Non-family parts (model narration, websearch/webfetch/other tools) are
+    // TRANSPARENT to an open run: models legitimately interleave them between
+    // browser calls, and flushing on every one shredded the session into
+    // 1-step strips. They render in the host chain, not in the strip.
+    if (fam === null) {
+      continue;
+    }
+    flush();
+    current.push(p);
+    hasTool = true;
+    currentFamily = fam;
   }
   flush();
   return blocks;
