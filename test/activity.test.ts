@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   activityActionLabel,
+  splitReasoningColumns,
   buildActivityFrames,
   fromActivityBlock,
   groupActivityBlocks,
@@ -131,5 +132,32 @@ describe("groupActivityBlocks — transparent non-family tools", () => {
     expect(blocks[0].family).toBe("browser");
     // Transparent webfetch parts are not consumed into the block.
     expect(blocks[0].parts.every((p) => p.type !== "tool" || String((p as { tool: string }).tool).startsWith("browser-hand"))).toBe(true);
+  });
+});
+
+describe("splitReasoningColumns", () => {
+  it("returns a single chunk for short captions", () => {
+    expect(splitReasoningColumns("Opening the page")).toEqual(["Opening the page"]);
+  });
+  it("returns [] for empty/whitespace input", () => {
+    expect(splitReasoningColumns("   ")).toEqual([]);
+  });
+  it("splits long reasoning into 3-line word-boundary columns", () => {
+    const text = "The pricing page shows the discount banner holds through Friday if headcount is confirmed, so I am verifying the exact terms before clicking submit on the order form today.";
+    const chunks = splitReasoningColumns(text);
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const c of chunks) expect(c.length).toBeLessThanOrEqual(3 * 44);
+    expect(chunks.join(" ")).toBe(text); // lossless up to the column cap
+  });
+  it("caps columns and appends an ellipsis on truncation", () => {
+    const text = Array.from({ length: 40 }, (_, i) => `word${i}`).join(" ");
+    const chunks = splitReasoningColumns(text, { maxColumns: 2 });
+    expect(chunks).toHaveLength(2);
+    expect(chunks[1].endsWith("…")).toBe(true);
+  });
+  it("hard-breaks a single runaway word", () => {
+    const chunks = splitReasoningColumns("a".repeat(500));
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.every((c) => c.length > 0)).toBe(true);
   });
 });

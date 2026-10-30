@@ -338,3 +338,54 @@ export function fromActivityBlock(parts: ActivityPartLike[]): ActivityStripMedia
     steps: frames.filter((f) => f.type !== "thought").length,
   };
 }
+
+// ─── streamed caption columns (v0.2.3) ───
+
+export interface ReasoningColumnOptions {
+  /** Max stacked lines per column (default 3). */
+  maxLines?: number;
+  /** Approximate characters per caption line at the host's caption size (default 44). */
+  charsPerLine?: number;
+  /** Max columns for one reasoning span before truncating with an ellipsis (default 4). */
+  maxColumns?: number;
+}
+
+/**
+ * Split a screenshot's paired reasoning into caption-column chunks: each
+ * chunk fills at most `maxLines` stacked lines at ~`charsPerLine` characters,
+ * and overflow continues in the NEXT column to the right rather than being
+ * clamped behind a "show more" toggle. Breaks at word boundaries; the final
+ * chunk takes an ellipsis when content was truncated. Empty/whitespace input
+ * returns [].
+ */
+export function splitReasoningColumns(
+  text: string,
+  opts?: ReasoningColumnOptions,
+): string[] {
+  const maxLines = opts?.maxLines ?? 3;
+  const charsPerLine = opts?.charsPerLine ?? 44;
+  const maxColumns = opts?.maxColumns ?? 4;
+  const budget = Math.max(1, maxLines * charsPerLine);
+
+  const rest = text.replace(/\s+/g, " ").trim();
+  if (!rest) return [];
+
+  const chunks: string[] = [];
+  let remaining = rest;
+  while (remaining && chunks.length < maxColumns) {
+    if (remaining.length <= budget) {
+      chunks.push(remaining);
+      remaining = "";
+      break;
+    }
+    let cut = remaining.lastIndexOf(" ", budget);
+    if (cut < Math.floor(budget * 0.6)) cut = budget; // hard-break runaway words
+    chunks.push(remaining.slice(0, cut).trim());
+    remaining = remaining.slice(cut).trim();
+  }
+  if (remaining && chunks.length > 0) {
+    const last = chunks[chunks.length - 1];
+    chunks[chunks.length - 1] = last.endsWith("…") ? last : `${last}…`;
+  }
+  return chunks;
+}

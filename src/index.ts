@@ -47,6 +47,7 @@ export {
 } from "./extract/connectors.js";
 export {
   fromActivityBlock,
+  splitReasoningColumns,
   groupActivityBlocks,
   buildActivityFrames,
   activityActionLabel,
